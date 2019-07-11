@@ -1,0 +1,11 @@
+# Pycharm developers
+.idea/
+
+# Mac computers suck
+*.DS_Store
+
+# Ignore pycache
+__pycache__/
+
+# Ignore compiled python files
+.pyc
