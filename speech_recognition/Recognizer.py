@@ -1,43 +1,28 @@
 import io
-
 import json
-import os
-
 import torch
 
 from audio.audio_resources import SpeechSource, AudioData, SpeechFile
+from audio.audio_parsers import SpectrogramAudioParser
 
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+from urllib.error import URLError, HTTPError
 
-from deepspeech_pytorch.model import DeepSpeech
+from errors.recognizer_errors import UnknownValueError, RequestError
 
-from deepspeech_pytorch.utils import models_dict, lm_dict
-
-try:  # attempt to use the Python 2 modules
-    from urllib import urlencode
-    from urllib2 import Request, urlopen, URLError, HTTPError
-except ImportError:  # use the Python 3 modules
-    from urllib.parse import urlencode
-    from urllib.request import Request, urlopen
-    from urllib.error import URLError, HTTPError
-
-
-class WaitTimeoutError(Exception):
-    pass
-
-
-class RequestError(Exception):
-    pass
-
-
-class UnknownValueError(Exception):
-    pass
+from speech_recognition.DanSpeechRecognizer import DanSpeechRecognizer
 
 
 class Recognizer(object):
 
-    def __init__(self, init_with_danspeech=True, model="0", decoder="16", use_gpu=False):
+    def __init__(self, model=None, **kwargs):
         """
         Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
+
+        lm_name requires model_name.
+        alpha and beta requires lm
+
         """
         # minimum audio energy to consider for recording
         self.energy_threshold = 300
@@ -56,23 +41,16 @@ class Recognizer(object):
 
         # seconds after an internal operation (e.g., an API request) starts before it times out, or ``None`` for no timeout
         self.operation_timeout = None
+        self.danspeech_recognizer = DanSpeechRecognizer(**kwargs)
 
-        self.init_with_danspeech = init_with_danspeech
+        if model:
+            self.update_model(model)
 
-        # DanSpeech initialization
-        if self.init_with_danspeech:
-            self.model_path = model
-            self.decoder = decoder
-            torch.set_grad_enabled(False)
-            self.device = torch.device("cuda" if use_gpu else "cpu")
+    def update_model(self, model):
+        self.danspeech_recognizer.update_model(model)
 
-    def update_model(self):
-        temp_dir = "/Volumes/Karens harddisk/acoustic_models"
-        model = DeepSpeech.load_model(os.path.join(temp_dir, self.model_path), change_conv=self.change_conv)
-        self.model = model.to(self.device)
-        self.model.eval()
-        self.labels = self.model.labels
-
+    def update_decoder(self, lm_name=None, alpha=None, beta=None, beam_width=None):
+        self.danspeech_recognizer.update_decoder(lm_name=lm_name, alpha=alpha, beta=beta, beam_width=beam_width)
 
     def record(self, source, duration=None, offset=None):
         """
@@ -164,7 +142,7 @@ class Recognizer(object):
         # return results
         if show_all: return actual_result
         if not isinstance(actual_result, dict) or len(
-            actual_result.get("alternative", [])) == 0: raise UnknownValueError()
+                actual_result.get("alternative", [])) == 0: raise UnknownValueError()
 
         if "confidence" in actual_result["alternative"]:
             # return alternative with highest confidence score
@@ -176,7 +154,7 @@ class Recognizer(object):
             raise UnknownValueError()
         return best_hypothesis["transcript"]
 
-    def recognize_danspeech(self, audio_data, show_all=False, model="best", use_lm=False):
+    def recognize_danspeech(self, audio_data, show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using a local DanSpeech model.
 
@@ -187,6 +165,8 @@ class Recognizer(object):
 
         """
 
+        return self.danspeech_recognizer.transcribe(audio_data.get_array_data(),
+                                                    show_all=show_all)
 
 
 """
@@ -195,13 +175,27 @@ Should be removed
 """
 if __name__ == '__main__':
     r = Recognizer()
+
+    # Choose one of the pre-trained models
+    # The model will be downloaded, so pick the ones that are interesting for your use case
+    from deepspeech_pytorch.pretrained_models import Units400
+
+    model = Units400()
+    # Defaulting to greedy decoding
+    r.update_model(model)
+    # Update decoder to 0, todo: change when language module module is implemented
+    r.update_decoder(lm_name="0", alpha=1.2, beta=0.4, beam_width=64)
+    print(r.danspeech_recognizer.beam_width)
+    print(r.danspeech_recognizer.alpha)
+    print(r.danspeech_recognizer.beta)
+    print(r.danspeech_recognizer.lm_name)
+
     file_path = "../example_files/u0013002.wav"
     with SpeechFile(filepath=file_path) as source:
         audio = r.record(source)
 
-    output = r.recognize_google(audio)
+    output = r.recognize_danspeech(audio, show_all=True)
     print(output)
-    print(audio.get_array_data())
 
     # Google API tests
     # result = r.recognize_google(audio, show_all=True)

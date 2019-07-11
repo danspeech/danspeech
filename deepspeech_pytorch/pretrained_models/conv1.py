@@ -5,7 +5,7 @@ WEIGHTS_PATH = "toDo"
 
 
 # ToDO: Top weights option
-def conv1():
+def Conv1():
     """
     Instantiates model with 1 conv layer and 5 rnn layers each with 800 units
 

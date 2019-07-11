@@ -6,7 +6,7 @@ from .data_utils import get_model
 MODEL_PACKAGE = "toDo"
 
 
-def danspeech_primary():
+def DanSpeechPrimary():
     """
     Instantiates the most complex DanSpeech model with a lot of parameters
 

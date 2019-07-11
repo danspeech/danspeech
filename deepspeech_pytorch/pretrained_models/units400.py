@@ -6,7 +6,7 @@ from .data_utils import get_model
 MODEL_PACKAGE = 'https://github.com/Rasmusafj/models_development/raw/master/400units.pth'
 
 
-def units400():
+def Units400():
     """
     Instantiates model with 2 conv layers and 5 rnn layers each with 400 units
 

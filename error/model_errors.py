@@ -1,4 +1,0 @@
-
-
-class ConvError(Exception):
-    pass

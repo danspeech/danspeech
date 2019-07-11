@@ -6,7 +6,7 @@ from .data_utils import get_model
 MODEL_PACKAGE = 'ToDo'
 
 
-def rnn3():
+def Rnn3():
     """
     Instantiates model with 2 conv layers and 3 rnn layers each with 800 units
 

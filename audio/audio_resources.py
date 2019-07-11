@@ -334,7 +334,7 @@ class AudioData(object):
     def get_array_data(self, convert_rate=None, convert_width=None):
         raw_data = self.get_raw_data(convert_rate, convert_width)
         sample_width = self.sample_width if convert_width is None else convert_width
-        return _wav2array(1, sample_width, raw_data).squeeze()
+        return _wav2array(1, sample_width, raw_data).squeeze().astype(float)
 
     def get_aiff_data(self, convert_rate=None, convert_width=None):
         """
