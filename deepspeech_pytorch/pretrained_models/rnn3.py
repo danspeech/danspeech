@@ -3,16 +3,12 @@ import torch
 from deepspeech_pytorch.model import DeepSpeech
 from .data_utils import get_model
 
-MODEL_PACKAGE = 'https://drive.google.com/open?id=1jFTZZNISA-qiJfLjfZaM21LY4niaYU_M'
-
-WEIGHTS_PATH_NO_TOP = "ToDO not"
+MODEL_PACKAGE = 'ToDo'
 
 
-# ToDO: Top weights option
-def RNN3():
+def rnn3():
     """
-    Instantiates the most complex DanSpeech model with a lot of parameters
-
+    Instantiates model with 2 conv layers and 3 rnn layers each with 800 units
 
     :return: Pretrained DeepSpeech model
     """
