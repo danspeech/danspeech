@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
 
-from errors.model_errors import ConvError
+from danspeech.errors.model_errors import ConvError
 
 supported_rnns = {
     'lstm': nn.LSTM,

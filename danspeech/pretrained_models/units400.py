@@ -1,7 +1,7 @@
 import torch
 
-from deepspeech_pytorch.model import DeepSpeech
-from utils.data_utils import get_model
+from danspeech.deepspeech.model import DeepSpeech
+from danspeech.utils.data_utils import get_model
 
 
 MODEL_PACKAGE = 'https://github.com/Rasmusafj/models_development/raw/master/400units.pth'

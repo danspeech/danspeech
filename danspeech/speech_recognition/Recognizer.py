@@ -5,14 +5,14 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
-from errors.recognizer_errors import UnknownValueError, RequestError
-from speech_recognition.DanSpeechRecognizer import DanSpeechRecognizer
-from audio.audio_resources import SpeechSource, AudioData, SpeechFile
+from danspeech.errors.recognizer_errors import UnknownValueError, RequestError, ModelNotInitialized
+from danspeech.speech_recognition.DanSpeechRecognizer import DanSpeechRecognizer
+from danspeech.audio.audio_resources import SpeechSource, AudioData, SpeechFile
 
 
 class Recognizer(object):
 
-    def __init__(self, model=None, **kwargs):
+    def __init__(self, model=None, lm=None, **kwargs):
         """
         Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
 
@@ -42,6 +42,13 @@ class Recognizer(object):
         if model:
             self.update_model(model)
 
+        if lm:
+            if not model:
+                    raise ModelNotInitialized("Trying to initialize language model without also choosing a DanSpeech "
+                                              "acoustic model.")
+            else:
+                self.update_decoder(lm=lm)
+
     def update_model(self, model):
         self.danspeech_recognizer.update_model(model)
 
@@ -55,7 +62,8 @@ class Recognizer(object):
         If ``duration`` is not specified, then it will record until there is no more audio input.
         """
         assert isinstance(source, SpeechSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before recording, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
+        assert source.stream is not None, "Audio source must be entered before recording, see documentation for " \
+                                          "``AudioSource``; are you using ``source`` outside of a ``with`` statement? "
 
         frames_bytes = io.BytesIO()
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
@@ -174,8 +182,8 @@ if __name__ == '__main__':
 
     # Choose one of the pre-trained models
     # The model will be downloaded, so pick the ones that are interesting for your use case
-    from pretrained_models import Units400
-    from language_models import DSL3gram
+    from danspeech.pretrained_models import Units400
+    from danspeech.language_models import DSL3gram
 
     model = Units400()
     # Defaulting to greedy decoding
@@ -185,7 +193,7 @@ if __name__ == '__main__':
     lm = DSL3gram()
     r.update_decoder(lm=lm, alpha=0.7, beta=1.3, beam_width=32)
 
-    file_path = "../example_files/u0013002.wav"
+    file_path = "../../example_files/u0013002.wav"
     with SpeechFile(filepath=file_path) as source:
         audio = r.record(source)
 

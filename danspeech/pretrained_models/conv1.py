@@ -1,6 +1,6 @@
 
-from deepspeech_pytorch.model import DeepSpeech
-from utils.data_utils import get_model
+from danspeech.deepspeech.model import DeepSpeech
+from danspeech.utils.data_utils import get_model
 
 WEIGHTS_PATH = "toDo"
 

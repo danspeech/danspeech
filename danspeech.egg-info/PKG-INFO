@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: danspeech
+Version: 0.0.1
+Summary: Speech recognition for Danish
+Home-page: https://github.com/rasmusafj/danspeech
+Author: Rasmus Arpe Fogh Jensen, Martin Carsten Nielsen
+Author-email: rasmus.arpe@gmail.com, mcnielsen4270@gmail.com,
+License: UNKNOWN
+Description: # danspeech
+        An open-source python package for Danish speech recognition
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Development Status :: 3 - Alpha
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown

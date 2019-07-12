@@ -1,9 +1,10 @@
 import torch
 import os
 
-from deepspeech_pytorch.decoder import GreedyDecoder
-from errors.recognizer_errors import ModelNotInitialized
-from audio.audio_parsers import SpectrogramAudioParser
+from danspeech.deepspeech.decoder import GreedyDecoder
+from danspeech.errors.recognizer_errors import ModelNotInitialized
+from danspeech.audio.audio_parsers import SpectrogramAudioParser
+
 
 class DanSpeechRecognizer(object):
 
@@ -81,7 +82,7 @@ class DanSpeechRecognizer(object):
             if self.lm != "greedy":
                 # Import package here to avoid BeamCTCDecoding being a requirement for DanSpeech
                 try:
-                    from deepspeech_pytorch.decoder import BeamCTCDecoder
+                    from deepspeech.decoder import BeamCTCDecoder
                 except ModuleNotFoundError as e:
                     raise e
 
