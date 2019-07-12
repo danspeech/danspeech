@@ -1,5 +1,4 @@
 import torch
-import os
 
 from danspeech.deepspeech.decoder import GreedyDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized

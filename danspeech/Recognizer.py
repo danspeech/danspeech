@@ -6,7 +6,7 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
 from danspeech.errors.recognizer_errors import UnknownValueError, RequestError, ModelNotInitialized
-from danspeech.speech_recognition.DanSpeechRecognizer import DanSpeechRecognizer
+from danspeech.DanSpeechRecognizer import DanSpeechRecognizer
 from danspeech.audio.audio_resources import SpeechSource, AudioData, SpeechFile
 
 
@@ -14,7 +14,7 @@ class Recognizer(object):
 
     def __init__(self, model=None, lm=None, **kwargs):
         """
-        Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
+        Creates a new ``Recognizer`` instance, whi  ch represents a collection of speech recognition functionality.
 
         lm_name requires model_name.
         alpha and beta requires lm

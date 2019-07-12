@@ -1,6 +1,0 @@
-README.md
-setup.py
-danspeech.egg-info/PKG-INFO
-danspeech.egg-info/SOURCES.txt
-danspeech.egg-info/dependency_links.txt
-danspeech.egg-info/top_level.txt
