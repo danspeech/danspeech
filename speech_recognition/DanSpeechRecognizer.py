@@ -5,7 +5,6 @@ from deepspeech_pytorch.decoder import GreedyDecoder
 from errors.recognizer_errors import ModelNotInitialized
 from audio.audio_parsers import SpectrogramAudioParser
 
-from deepspeech_pytorch.utils import lm_dict
 class DanSpeechRecognizer(object):
 
     def __init__(self, model_name=None, lm_name=None,
@@ -35,9 +34,9 @@ class DanSpeechRecognizer(object):
                 raise ModelNotInitialized("Trying to initialize LM without also choosing a DanSpeech model.")
             else:
                 self.update_decoder(lm_name)
-                self.lm_name = lm_name
+                self.lm = lm_name
         else:
-            self.lm_name = None
+            self.lm = None
             self.decoder = None
 
     def update_model(self, model):
@@ -49,18 +48,18 @@ class DanSpeechRecognizer(object):
         # When updating model, always update decoder because of labels
         self.update_decoder(labels=self.model.labels)
 
-    def update_decoder(self, lm_name=None, alpha=None, beta=None, labels=None, beam_width=None):
+    def update_decoder(self, lm=None, alpha=None, beta=None, labels=None, beam_width=None):
 
         update = False
 
         # If both lm_name and decoder is not set, then we need to init greedy as default use
-        if not self.lm_name and not self.decoder:
+        if not self.lm and not self.decoder:
             update = True
-            self.lm_name = "greedy"
+            self.lm = "greedy"
 
-        if lm_name and self.lm_name != lm_name:
+        if lm and self.lm != lm:
             update = True
-            self.lm_name = lm_name
+            self.lm = lm
 
         if alpha and self.alpha != alpha:
             update = True
@@ -79,18 +78,14 @@ class DanSpeechRecognizer(object):
             self.beam_width = beam_width
 
         if update:
-            if self.lm_name != "greedy":
+            if self.lm != "greedy":
                 # Import package here to avoid BeamCTCDecoding being a requirement for DanSpeech
                 try:
                     from deepspeech_pytorch.decoder import BeamCTCDecoder
                 except ModuleNotFoundError as e:
                     raise e
 
-                # toDO: Create Language model module and remove the temp path
-                temp_lm_dir = "/Volumes/Karens harddisk/lms/final_models_klm"
-                true_lm_name = lm_dict[self.lm_name]
-
-                self.decoder = BeamCTCDecoder(labels=self.labels, lm_path=os.path.join(temp_lm_dir, true_lm_name),
+                self.decoder = BeamCTCDecoder(labels=self.labels, lm_path=self.lm,
                                               alpha=self.alpha, beta=self.beta,
                                               beam_width=self.beam_width, num_processes=6, cutoff_prob=1.0, cutoff_top_n=40)
 

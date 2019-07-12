@@ -37,13 +37,19 @@ def validate_file(fpath, file_hash, chunk_size=65535):
         return False
 
 
+subdir_mapper = {"acoustic_model": "models",
+                 "language_model": "lms"}
+
+
 def get_model(model_name,
               origin,
+              file_type="acoustic_model",
               file_hash=None,
               cache_dir=None):
     """
     Downloads a model file from a URL if it not already in the cache.
 
+    :param file_type: acoustic_model or language_model. Determines subdir to store model.
     :param model_name: Name of the model
     :param origin: URL to the model package
     :param file_hash: The expected md5 hash string of the file. Use None if no validation is needed,
@@ -52,7 +58,7 @@ def get_model(model_name,
     """
 
     if cache_dir is None:
-        cache_dir = os.path.join(os.path.expanduser('~'), '.danspeech', 'models')
+        cache_dir = os.path.join(os.path.expanduser('~'), '.danspeech', subdir_mapper[file_type])
 
     hash_algorithm = 'md5'
     os.makedirs(cache_dir, exist_ok=True)

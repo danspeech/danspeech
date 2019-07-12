@@ -1,17 +1,13 @@
 import io
 import json
-import torch
-
-from audio.audio_resources import SpeechSource, AudioData, SpeechFile
-from audio.audio_parsers import SpectrogramAudioParser
 
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
 from errors.recognizer_errors import UnknownValueError, RequestError
-
 from speech_recognition.DanSpeechRecognizer import DanSpeechRecognizer
+from audio.audio_resources import SpeechSource, AudioData, SpeechFile
 
 
 class Recognizer(object):
@@ -49,8 +45,8 @@ class Recognizer(object):
     def update_model(self, model):
         self.danspeech_recognizer.update_model(model)
 
-    def update_decoder(self, lm_name=None, alpha=None, beta=None, beam_width=None):
-        self.danspeech_recognizer.update_decoder(lm_name=lm_name, alpha=alpha, beta=beta, beam_width=beam_width)
+    def update_decoder(self, lm=None, alpha=None, beta=None, beam_width=None):
+        self.danspeech_recognizer.update_decoder(lm=lm, alpha=alpha, beta=beta, beam_width=beam_width)
 
     def record(self, source, duration=None, offset=None):
         """
@@ -178,17 +174,16 @@ if __name__ == '__main__':
 
     # Choose one of the pre-trained models
     # The model will be downloaded, so pick the ones that are interesting for your use case
-    from deepspeech_pytorch.pretrained_models import Units400
+    from pretrained_models import Units400
+    from language_models import DSL3gram
 
     model = Units400()
     # Defaulting to greedy decoding
     r.update_model(model)
-    # Update decoder to 0, todo: change when language module module is implemented
-    r.update_decoder(lm_name="0", alpha=1.2, beta=0.4, beam_width=64)
-    print(r.danspeech_recognizer.beam_width)
-    print(r.danspeech_recognizer.alpha)
-    print(r.danspeech_recognizer.beta)
-    print(r.danspeech_recognizer.lm_name)
+
+    # Update decoder
+    lm = DSL3gram()
+    r.update_decoder(lm=lm, alpha=0.7, beta=1.3, beam_width=32)
 
     file_path = "../example_files/u0013002.wav"
     with SpeechFile(filepath=file_path) as source:

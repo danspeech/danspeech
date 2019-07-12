@@ -1,7 +1,8 @@
 import torch
 
 from deepspeech_pytorch.model import DeepSpeech
-from .data_utils import get_model
+from utils.data_utils import get_model
+
 
 MODEL_PACKAGE = 'ToDo'
 
