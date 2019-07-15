@@ -10,6 +10,7 @@ import audioop
 import io
 
 from abc import ABC, abstractmethod
+import scipy.io.wavfile as wav
 
 # attempt to use the Python 2 modules
 try:
@@ -20,6 +21,18 @@ except ImportError:
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
+
+
+def load_audio(path):
+    _, sound = wav.read(path)
+
+    if len(sound.shape) > 1:
+        if sound.shape[1] == 1:
+            sound = sound.squeeze()
+        else:
+            sound = sound.mean(axis=1)  # multiple channels, average
+
+    return sound.astype(float)
 
 
 def shutil_which(pgm):
@@ -51,7 +64,8 @@ def get_flac_converter():
             flac_converter = os.path.join(base_path, "flac-linux-x86_64")
         else:
             # no FLAC converter available
-            raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application by running `apt-get install flac` or your operating system's equivalent")
+            raise OSError(
+                "FLAC conversion utility not available - consider installing the FLAC command line application by running `apt-get install flac` or your operating system's equivalent")
 
     # mark FLAC converter as executable if possible
     try:
@@ -157,7 +171,8 @@ class SpeechFile(SpeechSource):
                     startup_info = None
                 process = subprocess.Popen([
                     flac_converter,
-                    "--stdout", "--totally-silent",  # put the resulting AIFF file in stdout, and make sure it's not mixed with any program output
+                    "--stdout", "--totally-silent",
+                    # put the resulting AIFF file in stdout, and make sure it's not mixed with any program output
                     "--decode", "--force-aiff-format",  # decode the FLAC file into an AIFF file
                     "-",  # the input FLAC file contents will be given in stdin
                 ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=startup_info)
@@ -166,7 +181,8 @@ class SpeechFile(SpeechSource):
                 try:
                     self.audio_reader = aifc.open(aiff_file, "rb")
                 except (aifc.Error, EOFError):
-                    raise ValueError("Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format")
+                    raise ValueError(
+                        "Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format")
                 self.little_endian = False  # AIFF is a big-endian format
         assert 1 <= self.audio_reader.getnchannels() <= 2, "Audio must be mono or stereo"
         self.SAMPLE_WIDTH = self.audio_reader.getsampwidth()
@@ -238,6 +254,7 @@ class AudioData(object):
 
     Usually, instances of this class are obtained from ``recognizer_instance.record`` or ``recognizer_instance.listen``, or in the callback for ``recognizer_instance.listen_in_background``, rather than instantiating them directly.
     """
+
     def __init__(self, frame_data, sample_rate, sample_width):
         assert sample_rate > 0, "Sample rate must be a positive integer"
         assert sample_width % 1 == 0 and 1 <= sample_width <= 4, "Sample width must be between 1 and 4 inclusive"
@@ -252,7 +269,8 @@ class AudioData(object):
         If not specified, ``start_ms`` defaults to the beginning of the audio, and ``end_ms`` defaults to the end.
         """
         assert start_ms is None or start_ms >= 0, "``start_ms`` must be a non-negative number"
-        assert end_ms is None or end_ms >= (0 if start_ms is None else start_ms), " ``end_ms`` must be a non-negative number greater or equal to ``start_ms``"
+        assert end_ms is None or end_ms >= (
+            0 if start_ms is None else start_ms), " ``end_ms`` must be a non-negative number greater or equal to ``start_ms``"
         if start_ms is None:
             start_byte = 0
         else:
@@ -274,13 +292,15 @@ class AudioData(object):
         Writing these bytes directly to a file results in a valid `RAW/PCM audio file <https://en.wikipedia.org/wiki/Raw_audio_format>`__.
         """
         assert convert_rate is None or convert_rate > 0, "Sample rate to convert to must be a positive integer"
-        assert convert_width is None or (convert_width % 1 == 0 and 1 <= convert_width <= 4), "Sample width to convert to must be between 1 and 4 inclusive"
+        assert convert_width is None or (
+                    convert_width % 1 == 0 and 1 <= convert_width <= 4), "Sample width to convert to must be between 1 and 4 inclusive"
 
         raw_data = self.frame_data
 
         # make sure unsigned 8-bit audio (which uses unsigned samples) is handled like higher sample width audio (which uses signed samples)
         if self.sample_width == 1:
-            raw_data = audioop.bias(raw_data, 1, -128)  # subtract 128 from every sample to make them act like signed samples
+            raw_data = audioop.bias(raw_data, 1,
+                                    -128)  # subtract 128 from every sample to make them act like signed samples
 
         # resample audio at the desired rate if specified
         if convert_rate is not None and self.sample_rate != convert_rate:
@@ -289,10 +309,14 @@ class AudioData(object):
         # convert samples to desired sample width if specified
         if convert_width is not None and self.sample_width != convert_width:
             if convert_width == 3:  # we're converting the audio into 24-bit (workaround for https://bugs.python.org/issue12866)
-                raw_data = audioop.lin2lin(raw_data, self.sample_width, 4)  # convert audio into 32-bit first, which is always supported
-                try: audioop.bias(b"", 3, 0)  # test whether 24-bit audio is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
+                raw_data = audioop.lin2lin(raw_data, self.sample_width,
+                                           4)  # convert audio into 32-bit first, which is always supported
+                try:
+                    audioop.bias(b"", 3,
+                                 0)  # test whether 24-bit audio is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
                 except audioop.error:  # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
-                    raw_data = b"".join(raw_data[i + 1:i + 4] for i in range(0, len(raw_data), 4))  # since we're in little endian, we discard the first byte from each 32-bit sample to get a 24-bit sample
+                    raw_data = b"".join(raw_data[i + 1:i + 4] for i in range(0, len(raw_data),
+                                                                             4))  # since we're in little endian, we discard the first byte from each 32-bit sample to get a 24-bit sample
                 else:  # 24-bit audio fully supported, we don't need to shim anything
                     raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
             else:
@@ -300,7 +324,8 @@ class AudioData(object):
 
         # if the output is 8-bit audio with unsigned samples, convert the samples we've been treating as signed to unsigned again
         if convert_width == 1:
-            raw_data = audioop.bias(raw_data, 1, 128)  # add 128 to every sample to make them act like unsigned samples again
+            raw_data = audioop.bias(raw_data, 1,
+                                    128)  # add 128 to every sample to make them act like unsigned samples again
 
         return raw_data
 
@@ -354,7 +379,8 @@ class AudioData(object):
         if hasattr(audioop, "byteswap"):  # ``audioop.byteswap`` was only added in Python 3.4
             raw_data = audioop.byteswap(raw_data, sample_width)
         else:  # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
-            raw_data = raw_data[sample_width - 1::-1] + b"".join(raw_data[i + sample_width:i:-1] for i in range(sample_width - 1, len(raw_data), sample_width))
+            raw_data = raw_data[sample_width - 1::-1] + b"".join(
+                raw_data[i + sample_width:i:-1] for i in range(sample_width - 1, len(raw_data), sample_width))
 
         # generate the AIFF-C file contents
         with io.BytesIO() as aiff_file:
@@ -381,7 +407,8 @@ class AudioData(object):
 
         Writing these bytes directly to a file results in a valid `FLAC file <https://en.wikipedia.org/wiki/FLAC>`__.
         """
-        assert convert_width is None or (convert_width % 1 == 0 and 1 <= convert_width <= 3), "Sample width to convert to must be between 1 and 3 inclusive"
+        assert convert_width is None or (
+                    convert_width % 1 == 0 and 1 <= convert_width <= 3), "Sample width to convert to must be between 1 and 3 inclusive"
 
         if self.sample_width > 3 and convert_width is None:  # resulting WAV data would be 32-bit, which is not convertable to FLAC using our encoder
             convert_width = 3  # the largest supported sample width is 24-bit, so we'll limit the sample width to that
@@ -397,12 +424,14 @@ class AudioData(object):
             startup_info = None  # default startupinfo
         process = subprocess.Popen([
             flac_converter,
-            "--stdout", "--totally-silent",  # put the resulting FLAC file in stdout, and make sure it's not mixed with any program output
+            "--stdout", "--totally-silent",
+            # put the resulting FLAC file in stdout, and make sure it's not mixed with any program output
             "--best",  # highest level of compression available
             "-",  # the input FLAC file contents will be given in stdin
         ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=startup_info)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
+
 
 """
 Local dev tests
@@ -412,4 +441,3 @@ if __name__ == '__main__':
     file_path = "../example_files/u0013002.wav"
     with SpeechFile(filepath=file_path, sampling_rate=16000) as source:
         pass
-

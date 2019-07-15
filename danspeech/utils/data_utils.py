@@ -72,7 +72,7 @@ def get_model(model_name,
                   'incomplete or outdated because the ' + hash_algorithm +
                   'file hash does not match the original value of ' +
                   file_hash + 'hence the model will be redownloaded and '
-                  'the incomplete or outdated model will be deleted')
+                              'the incomplete or outdated model will be deleted')
             download = True
     else:
         download = True

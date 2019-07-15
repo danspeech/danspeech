@@ -7,7 +7,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
-
 from danspeech.errors.model_errors import ConvError
 
 supported_rnns = {
@@ -184,7 +183,7 @@ class DeepSpeech(nn.Module):
                 nn.Conv2d(1, 32, kernel_size=(41, 11), stride=(2, 2), padding=(20, 5)),
                 nn.BatchNorm2d(32),
                 nn.Hardtanh(0, 20, inplace=True),
-                )
+            )
             )
 
             rnn_input_size *= 32
@@ -197,7 +196,7 @@ class DeepSpeech(nn.Module):
                 nn.Conv2d(32, 32, kernel_size=(21, 11), stride=(2, 1), padding=(10, 5)),
                 nn.BatchNorm2d(32),
                 nn.Hardtanh(0, 20, inplace=True)
-                )
+            )
             )
 
             rnn_input_size = int(math.floor(rnn_input_size + 2 * 10 - 21) / 2 + 1)
@@ -214,7 +213,7 @@ class DeepSpeech(nn.Module):
                 nn.Conv2d(32, 96, kernel_size=(21, 11), stride=(2, 1), padding=(10, 5)),
                 nn.BatchNorm2d(96),
                 nn.Hardtanh(0, 20, inplace=True)
-                )
+            )
             )
             rnn_input_size = int(math.floor(rnn_input_size + 2 * 10 - 21) / 2 + 1)
             rnn_input_size = int(math.floor(rnn_input_size + 2 * 10 - 21) / 2 + 1)
@@ -279,21 +278,23 @@ class DeepSpeech(nn.Module):
         return seq_len.int()
 
     @classmethod
-    def load_model(cls, path):
+    def load_model(cls, path, conv_layers=2):
         package = torch.load(path, map_location=lambda storage, loc: storage)
         model = cls(rnn_hidden_size=package['hidden_size'], nb_layers=package['hidden_layers'],
                     labels=package['labels'], audio_conf=package['audio_conf'],
-                    rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True))
+                    rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
+                    conv_layers=conv_layers)
         model.load_state_dict(package['state_dict'])
         for x in model.rnns:
             x.flatten_parameters()
         return model
 
     @classmethod
-    def load_model_package(cls, package):
+    def load_model_package(cls, package, conv_layers=2):
         model = cls(rnn_hidden_size=package['hidden_size'], nb_layers=package['hidden_layers'],
                     labels=package['labels'], audio_conf=package['audio_conf'],
-                    rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True))
+                    rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
+                    conv_layers=conv_layers)
         model.load_state_dict(package['state_dict'])
         return model
 
