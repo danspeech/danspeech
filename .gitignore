@@ -1,7 +1,7 @@
 # Pycharm developers
 .idea/
 
-# Mac computers suck
+# Ignore local mac files
 *.DS_Store
 
 # Ignore pycache
