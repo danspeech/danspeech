@@ -2,7 +2,7 @@
 An open-source python package for Danish speech recognition.
 
 
-# Setup
+# Installation
 Current setup is 
 
 ```bash
@@ -12,7 +12,7 @@ pip install . -r requirements.txt
 If you require beam CTC decoding, then you additional need to
 install [ctcdecode](https://github.com/parlance/ctcdecode).
 
-# Example
+# Usage
 
 ```python
 import danspeech
@@ -37,3 +37,27 @@ recognizer.update_decoder(lm=lm, alpha=1.3, beta=0.15, beam_width=32)
 print(recognizer.recognize(audio, show_all=True))
 
 ```
+
+# Demo
+To experience the models, we've created a demo. The demo resides at [https://github.com/rasmusafj/danspeechdemo](https://github.com/rasmusafj/danspeechdemo).
+
+# Support
+If you require help with the software, then feel free to create issues here on github. We will continually solve issues
+and answer any questions that you might have. 
+
+
+# Authors and acknowledgment
+Main authors: 
+* Martin Carsten Nielsen  ([mcnielsen4270@gmail.com](mcnielsen4270@gmail.com))
+* Rasmus Arpe Fogh Jensen ([rasmus.arpe@gmail.com](rasmus.arpe@gmail.com))
+
+Other acknowledgements:
+
+* We've trained the models based on the code from [https://github.com/SeanNaren/deepspeech.pytorch](https://github.com/SeanNaren/deepspeech.pytorch)
+* The audio handling and recognizing flow is based on [https://github.com/Uberi/speech_recognition](https://github.com/Uberi/speech_recognition)
+* Handling of the pretrained models is based on [keras](https://github.com/keras-team/keras)
+* We've trained all models with the aid of DTU using data from
+
+# Project status
+The project is currently under development. We will soon give first release and we expect a stable release to ocurr
+in late august 2019. If you want to contribute, then you are welcome to fork and create pull requests. 
