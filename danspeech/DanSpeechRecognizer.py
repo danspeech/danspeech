@@ -8,10 +8,10 @@ from danspeech.audio.parsers import SpectrogramAudioParser
 class DanSpeechRecognizer(object):
 
     def __init__(self, model_name=None, lm_name=None,
-                 alpha=1.3, beta=0.2, use_gpu=False,
+                 alpha=1.3, beta=0.2, with_gpu=False,
                  beam_width=64):
 
-        self.device = torch.device("cuda" if use_gpu else "cpu")
+        self.device = torch.device("cuda" if with_gpu else "cpu")
 
         # Init model if given
         if model_name:
