@@ -1,4 +1,3 @@
-
 from danspeech.utils.data_utils import get_model
 
 LANGUAGE_MODEL_ORIGIN = "https://github.com/Rasmusafj/models_development/raw/master/da_lm_3gram_pruned_0_5_30.klm"

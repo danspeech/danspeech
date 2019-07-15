@@ -3,7 +3,6 @@ import torch
 from danspeech.deepspeech.model import DeepSpeech
 from danspeech.utils.data_utils import get_model
 
-
 MODEL_PACKAGE = 'ToDo'
 
 
@@ -17,5 +16,3 @@ def Rnn3():
     package = torch.load(model_path, map_location=lambda storage, loc: storage)
     model = DeepSpeech.load_model_package(package)
     return model
-
-

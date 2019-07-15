@@ -1,5 +1,3 @@
-
-
 class WaitTimeoutError(Exception):
     pass
 
@@ -14,4 +12,3 @@ class UnknownValueError(Exception):
 
 class ModelNotInitialized(Exception):
     pass
-

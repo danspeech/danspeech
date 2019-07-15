@@ -7,7 +7,7 @@ from urllib.error import URLError, HTTPError
 
 from danspeech.errors.recognizer_errors import UnknownValueError, RequestError, ModelNotInitialized
 from danspeech.DanSpeechRecognizer import DanSpeechRecognizer
-from danspeech.audio.audio_resources import SpeechSource, AudioData, SpeechFile
+from danspeech.audio.resources import SpeechSource, AudioData, SpeechFile
 
 
 class Recognizer(object):
@@ -160,7 +160,7 @@ class Recognizer(object):
 
     def recognize_danspeech(self, audio_data, show_all=False):
         """
-        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using a local DanSpeech model.
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using a loceal DanSpeech model.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the
         16 most likely beams from beam search with a language model
