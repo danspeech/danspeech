@@ -171,37 +171,3 @@ class Recognizer(object):
 
         return self.danspeech_recognizer.transcribe(audio_data.get_array_data(),
                                                     show_all=show_all)
-
-
-"""
-Local dev tests
-Should be removed
-"""
-if __name__ == '__main__':
-    r = Recognizer()
-
-    # Choose one of the pre-trained models
-    # The model will be downloaded, so pick the ones that are interesting for your use case
-    from danspeech.pretrained_models import Units400
-    from danspeech.language_models import DSL3gram
-
-    model = Units400()
-    # Defaulting to greedy decoding
-    r.update_model(model)
-
-    # Update decoder
-    lm = DSL3gram()
-    r.update_decoder(lm=lm, alpha=0.7, beta=1.3, beam_width=32)
-
-    file_path = "../../example_files/u0013002.wav"
-    with SpeechFile(filepath=file_path) as source:
-        audio = r.record(source)
-
-    output = r.recognize_danspeech(audio, show_all=True)
-    print(output)
-
-    # Google API tests
-    # result = r.recognize_google(audio, show_all=True)
-    # print(result)
-
-    wav = audio.get_wav_data()
