@@ -24,7 +24,7 @@ from danspeech.audio.resources import SpeechFile
 model = Units400()
 recognizer = danspeech.Recognizer(model=model)
 
-# Load the speech file
+# Load the speech file.
 with SpeechFile(filepath="./example_files/u0013002.wav") as source:
     audio = recognizer.record(source)
    
@@ -56,7 +56,7 @@ Other acknowledgements:
 * We've trained the models based on the code from [https://github.com/SeanNaren/deepspeech.pytorch](https://github.com/SeanNaren/deepspeech.pytorch)
 * The audio handling and recognizing flow is based on [https://github.com/Uberi/speech_recognition](https://github.com/Uberi/speech_recognition)
 * Handling of the pretrained models is based on [keras](https://github.com/keras-team/keras)
-* We've trained all models with the aid of DTU using data from
+* We've trained all models with the aid of DTU using data from Sprakbanken ([NST](https://www.nb.no/sprakbanken/show?serial=oai%3Anb.no%3Asbr-19&lang=en))
 
 # Project status
 The project is currently under development. We will soon give first release and we expect a stable release to ocurr
