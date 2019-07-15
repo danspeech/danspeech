@@ -158,7 +158,7 @@ class Recognizer(object):
             raise UnknownValueError()
         return best_hypothesis["transcript"]
 
-    def recognize_danspeech(self, audio_data, show_all=False):
+    def recognize(self, audio_data, show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using a loceal DanSpeech model.
 
