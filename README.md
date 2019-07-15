@@ -9,7 +9,7 @@ Current setup is
 pip install . -r requirements.txt 
 ```
 
-If you require beam CTC decoding, then you additional need to
+If you require beam CTC decoding, then you additionally need to
 install [ctcdecode](https://github.com/parlance/ctcdecode).
 
 # Usage
