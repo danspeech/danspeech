@@ -1,17 +1,17 @@
 import torch
 
-from danspeech.deepspeech.decoder import GreedyDecoder
+from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized
-from danspeech.audio.audio_parsers import SpectrogramAudioParser
+from danspeech.audio.parsers import SpectrogramAudioParser
 
 
 class DanSpeechRecognizer(object):
 
     def __init__(self, model_name=None, lm_name=None,
-                 alpha=1.3, beta=0.2, use_gpu=False,
+                 alpha=1.3, beta=0.2, with_gpu=False,
                  beam_width=64):
 
-        self.device = torch.device("cuda" if use_gpu else "cpu")
+        self.device = torch.device("cuda" if with_gpu else "cpu")
 
         # Init model if given
         if model_name:
@@ -40,8 +40,8 @@ class DanSpeechRecognizer(object):
             self.decoder = None
 
     def update_model(self, model):
-        self.model = model
-        self.model = self.model.to(self.device)
+        self.model = model.to(self.device)
+        self.model.eval()
         self.audio_config = self.model.audio_conf
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
 
@@ -79,15 +79,10 @@ class DanSpeechRecognizer(object):
 
         if update:
             if self.lm != "greedy":
-                # Import package here to avoid BeamCTCDecoding being a requirement for DanSpeech
-                try:
-                    from deepspeech.decoder import BeamCTCDecoder
-                except ModuleNotFoundError as e:
-                    raise e
-
                 self.decoder = BeamCTCDecoder(labels=self.labels, lm_path=self.lm,
                                               alpha=self.alpha, beta=self.beta,
-                                              beam_width=self.beam_width, num_processes=6, cutoff_prob=1.0, cutoff_top_n=40)
+                                              beam_width=self.beam_width, num_processes=6, cutoff_prob=1.0,
+                                              cutoff_top_n=40, blank_index=self.labels.index('_'))
 
             else:
                 self.decoder = GreedyDecoder(labels=self.labels, blank_index=self.labels.index('_'))

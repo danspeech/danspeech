@@ -12,7 +12,9 @@ def DanSpeechPrimary(cache_dir=None):
 
     :return: Pretrained DeepSpeech model
     """
-    model_path = get_model(model_name="danspeech.pth", origin=MODEL_PACKAGE, file_hash="", cache_dir=cache_dir)
+    model_path = get_model(model_name="danspeech_primary.pth", origin=MODEL_PACKAGE, file_hash="2dfa5b8bdee1970d20c6594014334436", cache_dir=cache_dir)
     package = torch.load(model_path, map_location=lambda storage, loc: storage)
-    model = DeepSpeech.load_model_package(package)
+
+    # ToDO: Fix the need of conv layers specificer... Should be deprecated when new models are trained
+    model = DeepSpeech.load_model_package(package, conv_layers=3)
     return model
