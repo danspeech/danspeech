@@ -22,12 +22,17 @@ class DanSpeechAugmenter(DataAugmenter):
     Class that implements the DanSpeech Augmentation scheme
     """
 
-    def __init__(self, sampling_rate):
+    def __init__(self, sampling_rate, augmentation_list=None):
         self.sampling_rate = sampling_rate
-        # Ordered list of augmentation policies
-        self.augmentations_list = [speed_perturb, room_reverb, volume_perturb, add_wn, shift_perturb]
+
+        # Allow user to specify a list of ordered augmentations
+        if not augmentation_list:
+            # Ordered list of augmentation policies
+            self.augmentations_list = [speed_perturb, room_reverb, volume_perturb, add_wn, shift_perturb]
 
     def augment(self, recording):
+
+        # toDo: Make augment probability depend on length of the augmentation list
         augment_gate = random.uniform(0, 1)
 
         # there are 30 possible unique permutations of the augmentation list, so we choose a random augmentation
