@@ -267,7 +267,7 @@ class Microphone(SpeechSource):
     def __init__(self, device_index=None, sample_rate=None, chunk_size=1024):
         assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
         assert sample_rate is None or (
-                    isinstance(sample_rate, int) and sample_rate > 0), "Sample rate must be None or a positive integer"
+                isinstance(sample_rate, int) and sample_rate > 0), "Sample rate must be None or a positive integer"
         assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
 
         # set up PyAudio
@@ -390,7 +390,6 @@ class Microphone(SpeechSource):
                     self.pyaudio_stream.stop_stream()
             finally:
                 self.pyaudio_stream.close()
-
 
 
 class AudioData(object):
