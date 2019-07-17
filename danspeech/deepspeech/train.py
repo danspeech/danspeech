@@ -3,6 +3,7 @@ import sys
 import time
 import argparse
 import random
+import numpy as np
 
 import torch
 import torch.distributed as dist
@@ -420,3 +421,18 @@ def train_model(model, args, package=None):
 
                 best_wer = wer_ncorr
                 avg_loss = 0
+
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    args.distributed = args.world_size > 1
+    args.cuda = True
+
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+
+    # Begin training
+    print(args)
+    train_model(args)
