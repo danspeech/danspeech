@@ -1,5 +1,6 @@
 import os
 import sys
+
 import time
 import argparse
 import random
@@ -21,6 +22,15 @@ from danspeech.errors.training_errors import ArgumentMissingForOption
 import distiller
 import distiller.apputils
 from distiller.data_loggers import TensorBoardLogger, PythonLogger
+
+os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
+sys.argv.pop(1)
+
+print(os.environ["CUDA_VISIBLE_DEVICES"])
+
+if torch.cuda.is_available():
+    print("Success")
+    print(torch.cuda.device_count())
 
 # -- DanSpeech-related arguments
 parser = argparse.ArgumentParser(description='DanSpeech Training / Pruning')
