@@ -82,10 +82,13 @@ if __name__ == '__main__':
     args.distributed = args.world_size > 1
     args.cuda = True
 
+    from danspeech.deepspeech.model import DeepSpeech
+    model = DeepSpeech()
+
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
     np.random.seed(args.seed)
     random.seed(args.seed)
 
     # Begin training
-    train_model(args)
+    train_model(model, args)
