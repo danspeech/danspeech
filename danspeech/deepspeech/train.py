@@ -25,6 +25,12 @@ from distiller.data_loggers import TensorBoardLogger, PythonLogger
 
 
 def train_model(model, args, package=None):
+    """
+    :param model: a DeepSpeech model, can either be a predefined DanSpeech model or a new model build by the user
+    :param args: ToDO: go nuts optional and required arguments, we are removing the argparsing
+    :param package: Serialized filed to load a model from
+    :return: Accuracy scores and a serialized model object, saved as a .pth file
+    """
     print(args)
     main_proc = True
 
@@ -160,7 +166,7 @@ def train_model(model, args, package=None):
     try:
         import CT
     except ModuleNotFoundError as e:
-        import torch.nn.modules.loss.CTCLoss as CTCLoss
+        from torch.nn.modules.loss import CTCLoss
 
     criterion = CTCLoss()
 
