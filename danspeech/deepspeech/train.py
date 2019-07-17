@@ -70,8 +70,6 @@ parser.add_argument('--rank', default=0, type=int,
 parser.add_argument('--continue-from', default='', help='Continue training from checkpoint')
 parser.add_argument('--finetune', dest='finetune', action='store_true',
                     help='Finetune the model from checkpoint by freezing all layers except the output layer')
-parser.add_argument('--prune', dest='prune', action='store_true',
-                    help='Continues training for 20 epochs (unless otherwise specificed) and prunes the model')
 
 # -- Multiple-GPU training arguments
 parser.add_argument('--world-size', default=1, type=int,
