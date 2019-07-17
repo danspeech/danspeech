@@ -25,7 +25,7 @@ parser.add_argument('--train-data-path', metavar='DIR',
                     help='Path to training data', default=None)
 parser.add_argument('--validation-data-path', metavar='DIR',
                     help='Path to validation data', default=None)
-parser.add_argument('--labels-path', default='./labels.json',
+parser.add_argument('--labels-path', default='./deepspeech/labels.json',
                     help='Contains all characters for transcription')
 
 # -- Spectogram hyper-parameters, defaults to DanSpeech model parameters
