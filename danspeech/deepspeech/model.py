@@ -1,5 +1,6 @@
 import json
 import math
+import os
 from collections import OrderedDict
 
 import torch
@@ -152,7 +153,8 @@ class DeepSpeech(nn.Module):
         super(DeepSpeech, self).__init__()
 
         if not labels:
-            with open("labels.json", "r", encoding="utf-8") as label_file:
+            label_path = "deepspeech/labels.json"
+            with open(label_path, "r", encoding="utf-8") as label_file:
                 labels = str(''.join(json.load(label_file)))
 
         if audio_conf is None:
@@ -336,8 +338,8 @@ class DeepSpeech(nn.Module):
             package['iteration'] = iteration
         if loss_results is not None:
             package['loss_results'] = loss_results
-            package['cer_results_corr'] = cer_results_corr
-            package['wer_results_corr'] = wer_results_corr
+            package['cer_results'] = cer_results_corr
+            package['wer_results'] = wer_results_corr
             package['cer_results_ncorr'] = cer_results_ncorr
             package['wer_results_ncorr'] = wer_results_ncorr
         if meta is not None:
