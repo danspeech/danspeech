@@ -12,7 +12,7 @@ from danspeech.deepspeech.utils import TensorBoardLogger, AverageMeter, reduce_t
 
 
 def train_model(model, train_data_path, validation_data_path, training_scheme='fine_tune', augmented_training=True,
-                distributed=False, batch_size=32, num_workers=6, cuda=True, lr=3e-4, momentum=0.9, weight_decay=1e-5,
+                distributed=False, batch_size=32, num_workers=6, cuda=False, lr=3e-4, momentum=0.9, weight_decay=1e-5,
                 epochs=20, compression_scheduler=None, max_norm=400):
     # -- toDO: include model diagnostic check to ensure all required parameters are included, and raise a warning
     # --       otherwise
