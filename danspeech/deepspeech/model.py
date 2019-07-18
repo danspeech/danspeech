@@ -148,8 +148,7 @@ class Lookahead(nn.Module):
 
 class DeepSpeech(nn.Module):
 
-    # ToDO: Rename nb_layers to nb_rnn_layers or something
-    def __init__(self, rnn_type=nn.LSTM, labels=None, rnn_hidden_size=768, nb_layers=5, audio_conf=None,
+    def __init__(self, rnn_type=nn.LSTM, labels=None, rnn_hidden_size=768, rnn_hidden_layers=5, audio_conf=None,
                  bidirectional=True, context=20, conv_layers=2):
         super(DeepSpeech, self).__init__()
 
@@ -165,11 +164,12 @@ class DeepSpeech(nn.Module):
         # model metadata needed for serialization/deserialization
         self.version = '0.0.1'
         self.hidden_size = rnn_hidden_size
-        self.hidden_layers = nb_layers
+        self.hidden_layers = rnn_hidden_layers
         self.rnn_type = rnn_type
         self.audio_conf = audio_conf or {}
         self.labels = labels
         self.bidirectional = bidirectional
+        self.conv_layers = conv_layers
 
         sample_rate = self.audio_conf.get("sampling_rate", 16000)
         window_size = self.audio_conf.get("window_size", 0.02)
@@ -283,8 +283,12 @@ class DeepSpeech(nn.Module):
 
     @classmethod
     def load_model(cls, path, conv_layers=2):
+        # toDO: Remove when all models are repackaged
+        if package["conv_layers"]:
+            conv_layers = package["conv_layers"]
+
         package = torch.load(path, map_location=lambda storage, loc: storage)
-        model = cls(rnn_hidden_size=package['hidden_size'], nb_layers=package['hidden_layers'],
+        model = cls(rnn_hidden_size=package['hidden_size'], rnn_hidden_layers=package['hidden_layers'],
                     labels=package['labels'], audio_conf=package['audio_conf'],
                     rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
                     conv_layers=conv_layers)
@@ -295,7 +299,11 @@ class DeepSpeech(nn.Module):
 
     @classmethod
     def load_model_package(cls, package, conv_layers=2):
-        model = cls(rnn_hidden_size=package['hidden_size'], nb_layers=package['hidden_layers'],
+        # toDO: Remove when all models are repackaged
+        if package["conv_layers"]:
+            conv_layers = package["conv_layers"]
+
+        model = cls(rnn_hidden_size=package['hidden_size'], rnn_hidden_layers=package['hidden_layers'],
                     labels=package['labels'], audio_conf=package['audio_conf'],
                     rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
                     conv_layers=conv_layers)
@@ -316,7 +324,8 @@ class DeepSpeech(nn.Module):
                 'audio_conf': model.module.audio_conf,
                 'labels': model.module.labels,
                 'state_dict': model.module.state_dict(),
-                'bidirectional': model.module.bidirectional
+                'bidirectional': model.module.bidirectional,
+                'conv_layers': model.module.conv_layers
             }
         else:
             package = {
@@ -327,7 +336,8 @@ class DeepSpeech(nn.Module):
                 'audio_conf': model.audio_conf,
                 'labels': model.labels,
                 'state_dict': model.state_dict(),
-                'bidirectional': model.bidirectional
+                'bidirectional': model.bidirectional,
+                'conv_layers': model.conv_layers
             }
 
         if optimizer is not None:
