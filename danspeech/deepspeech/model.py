@@ -153,7 +153,8 @@ class DeepSpeech(nn.Module):
         super(DeepSpeech, self).__init__()
 
         if not labels:
-            label_path = "deepspeech/labels.json"
+            from . import __path__ as ROOT_PATH
+            label_path = os.path.join(ROOT_PATH[0], "labels.json")
             with open(label_path, "r", encoding="utf-8") as label_file:
                 labels = str(''.join(json.load(label_file)))
 
