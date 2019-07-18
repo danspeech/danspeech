@@ -10,11 +10,10 @@ def to_np(x):
 
 class TensorBoardLogger(object):
 
-    def __init__(self, id, log_dir, log_params):
+    def __init__(self, id, log_dir):
         os.makedirs(log_dir, exist_ok=True)
         self.id = id
         self.tensorboard_writer = SummaryWriter(log_dir)
-        self.log_params = log_params
 
     def update(self, epoch, values):
         values = {

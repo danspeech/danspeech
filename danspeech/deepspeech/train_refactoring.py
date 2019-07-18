@@ -1,5 +1,7 @@
+import os
 import time
 import tqdm
+import warnings
 
 import torch
 from torch.nn.modules.loss import CTCLoss
@@ -9,17 +11,85 @@ from danspeech.audio.parsers import SpectrogramAudioParser
 from danspeech.audio.augmentation import DanSpeechAugmenter
 from danspeech.deepspeech.decoder import GreedyDecoder
 from danspeech.deepspeech.utils import TensorBoardLogger, AverageMeter, reduce_tensor, sum_tensor
+from danspeech.errors.training_errors import ArgumentMissingForOption
 
 
-def train_model(model, train_data_path, validation_data_path, training_scheme='fine_tune', augmented_training=True,
-                distributed=False, batch_size=32, num_workers=6, cuda=False, lr=3e-4, momentum=0.9, weight_decay=1e-5,
-                epochs=20, compression_scheduler=None, max_norm=400):
-    # -- toDO: include model diagnostic check to ensure all required parameters are included, and raise a warning
-    # --       otherwise
+class NoModelSaveDirSpecified(Warning):
+    pass
+
+
+class NoLoggingDirSpecified(Warning):
+    pass
+
+
+def _train_model(model, train_data_path, validation_data_path, model_id, model_save_dir=None, tensorboard_log_dir=None,
+                 continue_train=False, augmented_training=True, distributed=False, batch_size=32, num_workers=6,
+                 cuda=False, lr=3e-4, momentum=0.9, weight_decay=1e-5, epochs=20, compression_scheduler=None,
+                 max_norm=400, package=None):
+    if not model_save_dir:
+        warnings.warn("You did not specify a directory for saving the trained model."
+                      "Defaulting to ~/.danspeech/custom/ directory.", NoModelSaveDirSpecified)
+
+        model_save_dir = os.path.join(os.path.expanduser('~'), '.danspeech', "custom")
+
+    os.makedirs(model_save_dir, exist_ok=True)
+
+    if tensorboard_log_dir:
+        logging_process = True
+        tensorboard_logger = TensorBoardLogger(model_id, tensorboard_log_dir)
+    else:
+        logging_process = False
+        warnings.warn(
+            "You did not specify a directory for logging training process. Training process will not be logged.",
+            NoLoggingDirSpecified)
+
+    loss_results = torch.Tensor(epochs)
+    cer_results = torch.Tensor(epochs)
+    wer_results = torch.Tensor(epochs)
+
+    # -- prepare model for processing
+    device = torch.device("cuda" if cuda else "cpu")
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum,
+                                nesterov=True, weight_decay=weight_decay)
+
+    # -- initialize metrics
+    avg_loss = 0
+    start_epoch = 0
+    start_iter = 0
+
+    if continue_train:
+        if not package:
+            raise ArgumentMissingForOption("If you want to continue training, please support a package with previous"
+                                           "training information or use the finetune option instead")
+        else:
+            optim_state = package['optim_dict']
+            optimizer.load_state_dict(optim_state)
+            start_epoch = int(package['epoch']) - 1  # Index start at 0 for training
+
+            print("Previous Epoch: {0}".format(start_epoch))
+
+            start_epoch += 1
+            start_iter = 0
+
+            avg_loss = int(package.get('avg_loss', 0))
+            loss_results_ = package['loss_results']
+            cer_results_ = package['cer_results']
+            wer_results_ = package['wer_results']
+
+            # ToDo: Make depend on the epoch from the package
+            previous_epochs = loss_results_.size()[0]
+            print("Previously ran: {0} epochs".format(previous_epochs))
+
+            loss_results[0:previous_epochs] = loss_results_
+            wer_results[0:previous_epochs] = cer_results_
+            cer_results[0:previous_epochs] = wer_results_
+
+            if logging_process:
+                tensorboard_logger.load_previous_values(start_epoch, package)
 
     # -- initialize audio parser and dataset
     if augmented_training:
-        augmenter = DanSpeechAugmenter(sampling_rate=model.audio_conf["sample_rate"])
+        augmenter = DanSpeechAugmenter(sampling_rate=model.audio_conf["sampling_rate"])
     else:
         augmenter = None
 
@@ -39,26 +109,19 @@ def train_model(model, train_data_path, validation_data_path, training_scheme='f
         validation_batch_loader = BatchDataLoader(validation_set, batch_size=batch_size, num_workers=num_workers,
                                                   shuffle=False)
 
-    # -- prepare model for processing
-    device = torch.device("cuda" if cuda else "cpu")
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, nesterov=True, weight_decay=weight_decay)
     decoder = GreedyDecoder(model.labels)
     criterion = CTCLoss()
-    print("Initializations complete, starting training pass on model:\n")
-    print(model)
     model = model.to(device)
-
-    # -- initialize metrics
-    loss_results, cer_results, wer_results = torch.Tensor(epochs), torch.Tensor(epochs), torch.Tensor(epochs)
-    avg_loss, start_epoch, start_iter = 0, 0, 0
 
     # -- verbatim training outputs during progress
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
+    print("Initializations complete, starting training pass on model:\n")
+    print(model)
     try:
-        for epoch in range(0, epochs):
-            print('started training epoch %s', epoch+1)
+        for epoch in range(start_epoch, epochs):
+            print('started training epoch %s', epoch + 1)
             model.train()
 
             # -- timings per epoch
@@ -142,6 +205,7 @@ def train_model(model, train_data_path, validation_data_path, training_scheme='f
 
             # -- report epoch summaries and prepare validation run
             avg_loss /= len(train_batch_loader)
+            loss_results[epoch] = avg_loss
             epoch_time = time.time() - start_epoch_time
             print('Training Summary Epoch: [{0}]\t'
                   'Time taken (s): {epoch_time:.0f}\t'
@@ -186,9 +250,17 @@ def train_model(model, train_data_path, validation_data_path, training_scheme='f
             # -- append metrics for logging
             loss_results[epoch], wer_results[epoch], cer_results[epoch] = avg_loss, avg_wer_epoch, avg_cer_epoch
 
+            if logging_process:
+                logging_values = {
+                    "loss_results": loss_results,
+                    "wer": avg_wer_epoch,
+                    "cer": avg_cer_epoch
+                }
+                tensorboard_logger.update(epoch, logging_values)
+
             print('Validation Summary Epoch: [{0}]\t'
                   'Average WER {wer:.3f}\t'
-                  'Average CER {cer:.3f}\t'.format(epoch + 1, wer=wer, cer=cer))
+                  'Average CER {cer:.3f}\t'.format(epoch + 1, wer=avg_wer_epoch, cer=avg_cer_epoch))
 
             # -- reset start iteration for next epoch
             start_iter = 0
@@ -196,3 +268,24 @@ def train_model(model, train_data_path, validation_data_path, training_scheme='f
     except KeyboardInterrupt:
         # ToDO: added distributed processing
         print('Implement a DanSpeech exception for early stopping here')
+
+
+def train_new(model, train_data_path, validation_data_path, model_id, model_save_dir=None,
+              tensorboard_log_dir=None, **args):
+
+    _train_model(model, train_data_path, validation_data_path, model_id, model_save_dir=model_save_dir,
+                 tensorboard_log_dir=tensorboard_log_dir, **args)
+
+
+def finetune(model, train_data_path, validaton_data_path, model_id, model_save_dir=None,
+             tensorboard_log_dir=None, **args):
+
+    _train_model(model, train_data_path, validaton_data_path, model_id, model_save_dir=model_save_dir,
+                 tensorboard_log_dir=tensorboard_log_dir, **args)
+
+
+def continue_training(model, train_data_path, validaton_data_path, model_id, package, model_save_dir=None,
+                      tensorboard_log_dir=None, **args):
+
+    _train_model(model, train_data_path, validaton_data_path, model_id, model_save_dir=model_save_dir,
+                 tensorboard_log_dir=tensorboard_log_dir, continue_train=True, package=package, **args)
