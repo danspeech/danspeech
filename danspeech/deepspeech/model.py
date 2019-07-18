@@ -283,11 +283,12 @@ class DeepSpeech(nn.Module):
 
     @classmethod
     def load_model(cls, path, conv_layers=2):
+        package = torch.load(path, map_location=lambda storage, loc: storage)
+
         # toDO: Remove when all models are repackaged
         if package["conv_layers"]:
             conv_layers = package["conv_layers"]
 
-        package = torch.load(path, map_location=lambda storage, loc: storage)
         model = cls(rnn_hidden_size=package['hidden_size'], rnn_hidden_layers=package['hidden_layers'],
                     labels=package['labels'], audio_conf=package['audio_conf'],
                     rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
@@ -308,6 +309,8 @@ class DeepSpeech(nn.Module):
                     rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
                     conv_layers=conv_layers)
         model.load_state_dict(package['state_dict'])
+        for x in model.rnns:
+            x.flatten_parameters()
         return model
 
     @staticmethod
