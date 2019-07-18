@@ -227,7 +227,7 @@ class DeepSpeech(nn.Module):
         rnn = BatchRNN(input_size=rnn_input_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type,
                        bidirectional=bidirectional, batch_norm=False)
         rnns.append(('0', rnn))
-        for x in range(nb_layers - 1):
+        for x in range(rnn_hidden_layers - 1):
             rnn = BatchRNN(input_size=rnn_hidden_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type,
                            bidirectional=bidirectional)
             rnns.append(('%d' % (x + 1), rnn))
