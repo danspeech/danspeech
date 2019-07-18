@@ -22,7 +22,7 @@ class AudioParser(ABC):
 
         # Defaulting if no audio_config
         self.normalize = self.audio_config.get("normalize", True)
-        self.sampling_rate = self.audio_config.get("sample_rate", 16000)
+        self.sampling_rate = self.audio_config.get("sampling_rate", 16000)
         window = self.audio_config.get("window", "hamming")
         self.window = windows[window]
 

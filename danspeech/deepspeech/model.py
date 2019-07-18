@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
 from danspeech.errors.model_errors import ConvError
+from danspeech.deepspeech.utils import get_default_audio_config
 
 supported_rnns = {
     'lstm': nn.LSTM,
@@ -159,7 +160,7 @@ class DeepSpeech(nn.Module):
                 labels = str(''.join(json.load(label_file)))
 
         if audio_conf is None:
-            audio_conf = {}
+            audio_conf = get_default_audio_config()
 
         # model metadata needed for serialization/deserialization
         self.version = '0.0.1'
@@ -170,7 +171,7 @@ class DeepSpeech(nn.Module):
         self.labels = labels
         self.bidirectional = bidirectional
 
-        sample_rate = self.audio_conf.get("sample_rate", 16000)
+        sample_rate = self.audio_conf.get("sampling_rate", 16000)
         window_size = self.audio_conf.get("window_size", 0.02)
         num_classes = len(self.labels)
 

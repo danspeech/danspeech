@@ -117,7 +117,7 @@ if __name__ == '__main__':
     from danspeech.audio.parsers import SpectrogramAudioParser
 
     model = Units400()
-    augmenter = DanSpeechAugmenter(model.audio_conf["sample_rate"])
+    augmenter = DanSpeechAugmenter(model.audio_conf["sampling_rate"])
     parser = SpectrogramAudioParser(audio_config=model.audio_conf,
                                     data_augmenter=augmenter)
 

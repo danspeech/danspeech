@@ -118,7 +118,7 @@ def train_model(model, args, package=None):
     # Init audio parsers and datasets
     augmenter = None
     if args.with_augmentations:
-        augmenter = DanSpeechAugmenter(sampling_rate=audio_conf["sample_rate"])
+        augmenter = DanSpeechAugmenter(sampling_rate=audio_conf["sampling_rate"])
 
     train_audio_parser = SpectrogramAudioParser(audio_config=audio_conf, data_augmenter=augmenter)
 

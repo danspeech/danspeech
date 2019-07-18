@@ -178,3 +178,6 @@ def add_wn(recording, *args):
 
     # append noise to signal
     return recording + noise
+
+
+speed_perturb()

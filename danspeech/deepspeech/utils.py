@@ -66,3 +66,13 @@ def sum_tensor(tensor):
     rt = tensor.clone()
     dist.all_reduce(rt, op=dist.reduce_op.SUM)
     return rt
+
+
+def get_default_audio_config():
+    return {
+        "normalize": True,
+        "sampling_rate": 16000,
+        "window": "hamming",
+        "window_stride": 0.01,
+        "window_size": 0.02
+    }
