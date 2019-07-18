@@ -77,7 +77,7 @@ class InferenceBatchSoftmax(nn.Module):
         if not self.training:
             return F.softmax(input_, dim=-1)
         else:
-            return input_
+            return F.log_softmax(input_, dim=1)
 
 
 class BatchRNN(nn.Module):
