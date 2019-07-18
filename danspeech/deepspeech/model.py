@@ -286,7 +286,7 @@ class DeepSpeech(nn.Module):
         package = torch.load(path, map_location=lambda storage, loc: storage)
 
         # toDO: Remove when all models are repackaged
-        if package["conv_layers"]:
+        if "conv_layers" in package:
             conv_layers = package["conv_layers"]
 
         model = cls(rnn_hidden_size=package['hidden_size'], rnn_hidden_layers=package['hidden_layers'],
@@ -301,7 +301,7 @@ class DeepSpeech(nn.Module):
     @classmethod
     def load_model_package(cls, package, conv_layers=2):
         # toDO: Remove when all models are repackaged
-        if package["conv_layers"]:
+        if "conv_layers" in package:
             conv_layers = package["conv_layers"]
 
         model = cls(rnn_hidden_size=package['hidden_size'], rnn_hidden_layers=package['hidden_layers'],
