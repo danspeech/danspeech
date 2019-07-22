@@ -4,7 +4,7 @@ import tqdm
 import warnings
 
 import torch
-from torch.nn.modules.loss import CTCLoss
+from torch_baidu_ctc import CTCLoss
 
 from danspeech.audio.datasets import BatchDataLoader, DanSpeechDataset
 from danspeech.audio.parsers import SpectrogramAudioParser
@@ -108,6 +108,13 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
                                              shuffle=True, pin_memory=True)
         validation_batch_loader = BatchDataLoader(validation_set, batch_size=batch_size, num_workers=num_workers,
                                                   shuffle=False)
+    else:
+        from apex.parallel import DistributedDataParallel
+        torch.cuda.set_device(int(gpu_rank))
+        # -- ToDo: add arguments to train method and create a wrapper
+        dist.init_process_group(backend=dist_backend, init_method=dist_url,
+                                world_size=world_size, rank=rank)
+        main_proc = rank == 0
 
     decoder = GreedyDecoder(model.labels)
     criterion = CTCLoss()
