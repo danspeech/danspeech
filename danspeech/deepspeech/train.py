@@ -1,10 +1,5 @@
 import os
-import sys
-
 import time
-import argparse
-import random
-import numpy as np
 
 import torch
 import torch.distributed as dist
@@ -18,10 +13,6 @@ from danspeech.deepspeech.decoder import GreedyDecoder
 from danspeech.deepspeech.model import DeepSpeech
 from danspeech.deepspeech.utils import TensorBoardLogger, AverageMeter, reduce_tensor, sum_tensor
 from danspeech.errors.training_errors import ArgumentMissingForOption
-
-import distiller
-import distiller.apputils
-from distiller.data_loggers import TensorBoardLogger, PythonLogger
 
 
 def train_model(model, args, package=None):

@@ -22,10 +22,16 @@ class NoLoggingDirSpecified(Warning):
     pass
 
 
-def _train_model(model, train_data_path, validation_data_path, model_id, model_save_dir=None, tensorboard_log_dir=None,
-                 continue_train=False, augmented_training=True, distributed=False, batch_size=32, num_workers=6,
-                 cuda=False, lr=3e-4, momentum=0.9, weight_decay=1e-5, epochs=20, compression_scheduler=None,
-                 max_norm=400, package=None):
+def _train_model(model, train_data_path, validation_data_path, model_id, epochs=20, model_save_dir=None,
+                 tensorboard_log_dir=None, continue_train=False, augmented_training=True, batch_size=32,
+                 num_workers=6, cuda=False, lr=3e-4, momentum=0.9, weight_decay=1e-5, compress=None,
+                 max_norm=400, package=None, distributed=False, args=None):
+
+    # -- set training device
+    main_proc = True
+    device = torch.device("cuda" if cuda else "cpu")
+
+    # -- prepare directories for storage and logging.
     if not model_save_dir:
         warnings.warn("You did not specify a directory for saving the trained model."
                       "Defaulting to ~/.danspeech/custom/ directory.", NoModelSaveDirSpecified)
@@ -43,25 +49,57 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
             "You did not specify a directory for logging training process. Training process will not be logged.",
             NoLoggingDirSpecified)
 
+    # -- handle distributed processing
+    # -- ToDO: handle multiple train calls, probably by taking args from an arg-parser for distributed training.
+    if distributed:
+        import torch.distributed as dist
+        from torch.utils.data.distributed import DistributedSampler
+        from apex.parallel import DistributedDataParallel
+
+        if args.gpu_rank:
+            torch.cuda.set_device(int(args.gpu_rank))
+
+        dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
+                                world_size=args.world_size, rank=args.rank)
+
+    # -- initialize training metrics ToDO: change to scalar quantities, no point in them being tensors
     loss_results = torch.Tensor(epochs)
     cer_results = torch.Tensor(epochs)
     wer_results = torch.Tensor(epochs)
 
     # -- prepare model for processing
-    device = torch.device("cuda" if cuda else "cpu")
+
+    compression_scheduler = None
+    if compress:
+        import distiller
+        from distiller import sparsity
+
+        # Create a CompressionScheduler and configure it from a YAML schedule file
+        compression_scheduler = distiller.config.file_config(model, None, compress)
+
     optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum,
                                 nesterov=True, weight_decay=weight_decay)
 
-    # -- initialize metrics
+    # -- initialize helper variables
     avg_loss = 0
     start_epoch = 0
     start_iter = 0
 
+    # -- load and initialize model metrics based on wrapper function
+    # -- ToDO: change continue_train to config: ['train_new', 'finetune', 'continue-train'] and run try except.
+    if train_new:
+        raise NotImplementedError
+
+    if finetune:
+        raise NotImplementedError
+
     if continue_train:
+        # -- continue_training wrapper
         if not package:
             raise ArgumentMissingForOption("If you want to continue training, please support a package with previous"
                                            "training information or use the finetune option instead")
         else:
+            # -- load stored training information
             optim_state = package['optim_dict']
             optimizer.load_state_dict(optim_state)
             start_epoch = int(package['epoch']) - 1  # Index start at 0 for training
@@ -109,16 +147,24 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
         validation_batch_loader = BatchDataLoader(validation_set, batch_size=batch_size, num_workers=num_workers,
                                                   shuffle=False)
     else:
-        from apex.parallel import DistributedDataParallel
-        torch.cuda.set_device(int(gpu_rank))
-        # -- ToDo: add arguments to train method and create a wrapper
-        dist.init_process_group(backend=dist_backend, init_method=dist_url,
-                                world_size=world_size, rank=rank)
-        main_proc = rank == 0
+        # -- initialize batch loaders for distributed training on multiple GPUs
+        train_sampler = DistributedSampler(training_set, num_replicas=args.world_size, rank=args.rank)
+        train_batch_loader = BatchDataLoader(training_set, batch_size=args.batch_size,
+                                             num_workers=args.num_workers,
+                                             sampler=train_sampler,
+                                             pin_memory=True)
+
+        validation_sampler = DistributedSampler(validation_set, num_replicas=args.world_size, rank=args.rank)
+        validation_batch_loader = BatchDataLoader(validation_set, batch_size=args.batch_size,
+                                                  num_workers=args.num_workers,
+                                                  sampler=validation_sampler)
+
+        model = DistributedDataParallel(model)
 
     decoder = GreedyDecoder(model.labels)
     criterion = CTCLoss()
     model = model.to(device)
+    best_wer = None
 
     # -- verbatim training outputs during progress
     batch_time = AverageMeter()
@@ -128,6 +174,10 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
     print(model)
     try:
         for epoch in range(start_epoch, epochs):
+            if distributed and epoch != 0:
+                # -- distributed sampling, keep epochs on all GPUs
+                train_sampler.set_epoch(epoch)
+
             print('started training epoch %s', epoch + 1)
             model.train()
 
@@ -141,6 +191,11 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
                 if i == len(train_batch_loader):
                     break
 
+                # -- if compression is used, activate compression schedule
+                if compression_scheduler:
+                    compression_scheduler.on_minibatch_begin(epoch, minibatch_id=i,
+                                                             minibatches_per_epoch=len(train_batch_loader))
+
                 # -- grab and prepare a sample for a training pass
                 inputs, targets, input_percentages, target_sizes = data
                 input_sizes = input_percentages.mul_(int(inputs.size(3))).int()
@@ -152,13 +207,6 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
                 # -- parse data and perform a training pass
                 inputs = inputs.to(device)
 
-                # -- if compression is used, activate compression schedule
-                if compression_scheduler:
-                    import distiller
-                    import distiller.apputils as apputils
-                    compression_scheduler.on_minibatch_begin(epoch, minibatch_id=i,
-                                                             minibatches_per_epoch=num_updates)
-
                 # -- compute the CTC-loss and average over mini-batch
                 out, output_sizes = model(inputs, input_sizes)
                 out = out.transpose(0, 1)
@@ -167,7 +215,11 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
                 loss = loss / inputs.size(0)
 
                 # -- check for diverging losses
-                loss_value = loss.item()
+                if distributed:
+                    loss_value = reduce_tensor(loss, args.world_size).item()
+                else:
+                    loss_value = loss.item()
+
                 if loss_value == float("inf") or loss_value == -float("inf"):
                     print("WARNING: received an inf loss, setting loss value to 0")
                     loss_value = 0
@@ -178,8 +230,10 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
 
                 # -- if compression is used, allow the scheduler to modify the loss before the backward pass
                 if compression_scheduler:
+                    # Before running the backward phase, we allow the scheduler to modify the loss
+                    # (e.g. add regularization loss)
                     loss = compression_scheduler.before_backward_pass(epoch, minibatch_id=i,
-                                                                      minibatches_per_epoch=num_updates,
+                                                                      minibatches_per_epoch=len(train_batch_loader),
                                                                       loss=loss, return_loss_components=False)
 
                 # -- compute gradients and back-propagate errors
@@ -195,7 +249,7 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
                 # -- if compression is used, keep track of when to mask
                 if compression_scheduler:
                     compression_scheduler.on_minibatch_end(epoch, minibatch_id=i,
-                                                           minibatches_per_epoch=num_updates)
+                                                           minibatches_per_epoch=len(train_batch_loader))
 
                 # -- measure elapsed time
                 batch_time.update(time.time() - end)
@@ -240,7 +294,7 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
                     target_strings = decoder.convert_to_strings(split_targets)
 
                     # -- compute accuracy metrics
-                    wer, cer = 0
+                    wer, cer = 0, 0
                     for x in range(len(target_strings)):
                         transcript, reference = decoded_output[x][0], target_strings[x][0]
                         wer += decoder.wer(transcript, reference) / float(len(reference.split()))
@@ -250,6 +304,18 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
                     total_cer += cer
                     del out
 
+            if distributed:
+                # -- sums tensor across all devices if distributed training is enabled
+                total_wer_tensor = torch.tensor(total_wer).to(device)
+                total_wer_tensor = sum_tensor(total_wer_tensor)
+                total_wer = total_wer_tensor.item()
+
+                total_cer_tensor = torch.tensor(total_cer).to(device)
+                total_cer_tensor = sum_tensor(total_cer_tensor)
+                total_cer = total_cer_tensor.item()
+
+                del total_wer_tensor, total_cer_tensor
+
             # -- compute average metrics for the validation pass
             avg_wer_epoch = (total_wer / len(validation_batch_loader.dataset)) * 100
             avg_cer_epoch = (total_cer / len(validation_batch_loader.dataset)) * 100
@@ -257,6 +323,7 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
             # -- append metrics for logging
             loss_results[epoch], wer_results[epoch], cer_results[epoch] = avg_loss, avg_wer_epoch, avg_cer_epoch
 
+            # -- log metrics for tensorboard
             if logging_process:
                 logging_values = {
                     "loss_results": loss_results,
@@ -265,9 +332,27 @@ def _train_model(model, train_data_path, validation_data_path, model_id, model_s
                 }
                 tensorboard_logger.update(epoch, logging_values)
 
+            # -- print validation metrics summary
             print('Validation Summary Epoch: [{0}]\t'
                   'Average WER {wer:.3f}\t'
                   'Average CER {cer:.3f}\t'.format(epoch + 1, wer=avg_wer_epoch, cer=avg_cer_epoch))
+
+            # -- print sparsity of tensors ToDO: make this more smooth and easily readable
+            print('Sparsity estimates:')
+            for name, layer in model.named_parameters():
+                print(name, layer.size(), sparsity(layer))
+
+            # -- save model if it has the highest recorded performance on validation, or optionally is done training.
+            if main_proc and (wer < best_wer or epoch == args.epochs):
+                model_path = model_save_dir + model_id + '.pth'
+                print("Found better validated model, saving to %s" % model_path)
+                torch.save(model.serialize(model, optimizer=optimizer, epoch=epoch, loss_results=loss_results,
+                                           wer_results=wer_results, cer_results=cer_results,
+                                           distributed=distributed)
+                           , model_path)
+
+                best_wer = wer
+                avg_loss = 0
 
             # -- reset start iteration for next epoch
             start_iter = 0
@@ -284,15 +369,15 @@ def train_new(model, train_data_path, validation_data_path, model_id, model_save
                  tensorboard_log_dir=tensorboard_log_dir, **args)
 
 
-def finetune(model, train_data_path, validaton_data_path, model_id, model_save_dir=None,
+def finetune(model, train_data_path, validaton_data_path, model_id, epochs, model_save_dir=None,
              tensorboard_log_dir=None, **args):
 
-    _train_model(model, train_data_path, validaton_data_path, model_id, model_save_dir=model_save_dir,
+    _train_model(model, train_data_path, validaton_data_path, model_id, epochs, model_save_dir=model_save_dir,
                  tensorboard_log_dir=tensorboard_log_dir, **args)
 
 
-def continue_training(model, train_data_path, validaton_data_path, model_id, package, model_save_dir=None,
+def continue_training(model, train_data_path, validaton_data_path, model_id, package, epochs, model_save_dir=None,
                       tensorboard_log_dir=None, **args):
 
-    _train_model(model, train_data_path, validaton_data_path, model_id, model_save_dir=model_save_dir,
+    _train_model(model, train_data_path, validaton_data_path, model_id, epochs, model_save_dir=model_save_dir,
                  tensorboard_log_dir=tensorboard_log_dir, continue_train=True, package=package, **args)
