@@ -23,7 +23,7 @@ total_sparsity = total_sparsity / num_layers
 
 recognizer = danspeech.Recognizer(model=model)
 
-with SpeechFile(filepath="../example_files/u0013002.wav") as source:
+with SpeechFile(filepath="../example_files/u0042019.wav") as source:
     audio = recognizer.record(source)
 
 start = time.time()
@@ -51,7 +51,7 @@ else:
 
 recognizer_baseline = danspeech.Recognizer(model=model_baseline)
 
-with SpeechFile(filepath="../example_files/u0013002.wav") as source:
+with SpeechFile(filepath="../example_files/u0042019.wav") as source:
     audio = recognizer_baseline.record(source)
 
 start = time.time()
