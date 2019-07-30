@@ -5,19 +5,25 @@ from danspeech.audio.resources import SpeechFile
 import torch
 from danspeech.deepspeech.model import DeepSpeech
 
+import distiller
 from distiller import sparsity
-
 
 # -- pruned baseline model
 package = torch.load('/home/mcn/newModels/baidu_pruned_baseline.pth', map_location=lambda storage, loc: storage)
 model = DeepSpeech.load_model_package(package)
 
+quantizer = distiller.quantization.PostTrainLinearQuantizer(model)
+quantizer.prepare_model()
+
 num_layers = 0
 total_sparsity = 0
 for name, layer in model.named_parameters():
     if sparsity(layer) > 0:
+        print(layer)
         total_sparsity += sparsity(layer)
         num_layers += 1
+        layer = layer.to_sparse()
+        print(layer)
 
 total_sparsity = total_sparsity / num_layers
 
