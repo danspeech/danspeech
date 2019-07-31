@@ -11,6 +11,7 @@ from torch.nn.parameter import Parameter
 from danspeech.errors.model_errors import ConvError
 from danspeech.deepspeech.utils import get_default_audio_config
 
+
 supported_rnns = {
     'lstm': nn.LSTM,
     'rnn': nn.RNN,
@@ -78,7 +79,7 @@ class InferenceBatchSoftmax(nn.Module):
         if not self.training:
             return F.softmax(input_, dim=-1)
         else:
-            return F.log_softmax(input_, dim=1)
+            return input_
 
 
 class BatchRNN(nn.Module):
@@ -267,6 +268,11 @@ class DeepSpeech(nn.Module):
         # identity in training mode, softmax in eval mode
         x = self.inference_softmax(x)
         return x, output_lengths
+
+    def convert_lstm(self):
+        from distiller.modules import DistillerLSTM
+        for batchRNN in self.rnns:
+            batchRNN.rnn = DistillerLSTM.from_pytorch_impl(batchRNN.rnn)
 
     def get_seq_lens(self, input_length):
         """
