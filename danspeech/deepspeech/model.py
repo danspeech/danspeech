@@ -576,7 +576,9 @@ class DeepSpeechStreamInference(nn.Module):
         # Dummy operatino
         package["state_dict"]["lookahead.conv.weight"] = package["state_dict"]["lookahead.0.conv.weight"]
         del package["state_dict"]["lookahead.0.conv.weight"]
+        print(package["state_dict"].keys())
         model.load_state_dict(package['state_dict'])
+
 
         for x in model.rnns:
             x.flatten_parameters()
