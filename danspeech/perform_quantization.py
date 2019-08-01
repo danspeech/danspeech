@@ -7,7 +7,7 @@ from distiller.quantization import PostTrainLinearQuantizer, LinearQuantMode
 from copy import deepcopy
 
 
-package = torch.load('/home/mcn/newModels/test_lstm_quantization.pth', map_location=lambda storage, loc: storage)
+package = torch.load('/home/s123106/danish-speech-recognition/models/test_lstm_quantization.pth', map_location=lambda storage, loc: storage)
 model = DeepSpeech.load_model_package(package)
 model.convert_lstm()
 
