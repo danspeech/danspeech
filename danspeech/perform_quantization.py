@@ -1,7 +1,7 @@
 import torch
-import librosa
 from danspeech.deepspeech.model import DeepSpeech
 from danspeech.audio.parsers import SpectrogramAudioParser
+from danspeech.audio.datasets import BatchDataLoader, DanSpeechDataset
 
 from distiller.quantization import PostTrainLinearQuantizer, LinearQuantMode
 from copy import deepcopy
@@ -19,13 +19,18 @@ quantizer = PostTrainLinearQuantizer(
 )
 
 stats_before_prepare = deepcopy(quantizer.model_activation_stats)
-y, sr = librosa.load("/home/mcn/danspeech/example_files/u0013002.wav", sr=16000)
-parser = SpectrogramAudioParser(audio_config=model.audio_conf, data_augmenter=None)
-dummy_input = parser.parse_audio(y)
-print(dummy_input.size())
-max_length = dummy_input.size(1)
-dummy_input = (torch.zeros(161, 419, 161, 419), torch.tensor(419))
-print(dummy_input)
+validation_parser = SpectrogramAudioParser(audio_config=model.audio_conf, data_augmenter=None)
+validation_set = DanSpeechDataset("/scratch/s134843/preprocessed_validation/", labels=model.labels, audio_parser=validation_parser)
+validation_batch_loader = BatchDataLoader(validation_set, batch_size=1, shuffle=False)
+
+for i, (data) in enumerate(validation_batch_loader):
+    if i == 1:
+        break
+    inputs, targets, input_percentages, target_sizes = data
+    input_sizes = input_percentages.mul_(int(inputs.size(3))).int()
+
+    dummy_input = (inputs, input_sizes)
+
 quantizer.prepare_model(dummy_input)
 
 print(quantizer.model)
