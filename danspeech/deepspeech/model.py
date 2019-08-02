@@ -458,14 +458,15 @@ class LookaheadStream(nn.Module):
 
         self.hard_tanh = nn.Hardtanh(0, 20, inplace=True)
 
-    def forward(self, x, is_last):
-        if not self.hidden_initiated:
+    def forward(self, x, is_last, is_first):
+        if not self.hidden_initiated or is_first:
             self.hidden_states_buffer = x
             self.hidden_initiated = True
             return torch.tensor(0)  # Dummy return
         else:
             out = torch.cat([self.hidden_states_buffer, x], dim=0)
-            self.hidden_states_buffer = x
+            # Save the last context-1 they cannot be computed until next pass
+            self.hidden_states_buffer = x[-(self.context-1):, :, :]
 
         out = out.transpose(0, 1).transpose(1, 2)
 
@@ -524,7 +525,8 @@ class DeepSpeechStreamInference(nn.Module):
         rnn_input_size *= 32
 
         rnns = []
-        rnn = BatchRNNStream(input_size=rnn_input_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type, batch_norm=False)
+        rnn = BatchRNNStream(input_size=rnn_input_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type,
+                             batch_norm=False)
         rnns.append(('0', rnn))
         for x in range(nb_layers - 1):
             rnn = BatchRNNStream(input_size=rnn_hidden_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type)
@@ -554,7 +556,7 @@ class DeepSpeechStreamInference(nn.Module):
         for rnn in self.rnns:
             x = rnn(x, is_last)
 
-        x = self.lookahead(x, is_last)
+        x = self.lookahead(x, is_last, is_first)
         # If x returned is none, then the layer is buffering for processing
         if len(x.size()) < 2:
             return None
@@ -576,9 +578,7 @@ class DeepSpeechStreamInference(nn.Module):
         # Dummy operatino
         package["state_dict"]["lookahead.conv.weight"] = package["state_dict"]["lookahead.0.conv.weight"]
         del package["state_dict"]["lookahead.0.conv.weight"]
-        print(package["state_dict"].keys())
         model.load_state_dict(package['state_dict'])
-
 
         for x in model.rnns:
             x.flatten_parameters()

@@ -341,8 +341,6 @@ class Recognizer(object):
                         while True:
                             if is_first:
                                 is_last, data = next(generator)
-                                # data /= 32767 # Normalize
-                                print(data.shape)
                             else:
                                 is_last, temp = next(generator)
                                 # temp /= 32767 # Normalize
