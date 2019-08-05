@@ -2,7 +2,7 @@ import torch
 
 from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized
-from danspeech.audio.parsers import SpectrogramAudioParser
+from danspeech.audio.parsers import SpectrogramAudioParser, InferenceSpectrogramAudioParser
 
 
 class DanSpeechRecognizer(object):
@@ -38,6 +38,11 @@ class DanSpeechRecognizer(object):
         else:
             self.lm = None
             self.decoder = None
+
+        # Streaming declarations
+        self.streaming = False
+        self.full_output = []
+        self.iterating_transcript = ""
 
     def update_model(self, model):
         self.model = model.to(self.device)
@@ -86,6 +91,70 @@ class DanSpeechRecognizer(object):
 
             else:
                 self.decoder = GreedyDecoder(labels=self.labels, blank_index=self.labels.index('_'))
+
+    def enable_streaming(self):
+        self.streaming = True
+        self.greedy_decoder = GreedyDecoder(labels=self.labels, blank_index=self.labels.index('_'))
+        self.audio_parser = InferenceSpectrogramAudioParser(audio_config=self.audio_config)
+
+    def disable_streaming(self):
+        self.streaming = False
+        self.audio_parser = SpectrogramAudioParser(self.audio_config)
+        self.iterating_transcript = ""
+        self.full_output = []
+        #self.spectrograms = []
+
+    def streaming_transcribe(self, recording, is_last, is_first):
+        recording = self.audio_parser.parse_audio(recording, is_last)
+
+        if len(recording) != 0:
+            # ToDO: Remove but keep here for now
+            #self.spectrograms.append(recording)
+            # Convert recording to batch for model purpose
+            recording = recording.view(1, 1, recording.size(0), recording.size(1))
+
+            recording.to(self.device)
+            out = self.model(recording, is_first, is_last)
+
+            # First pass returns None, as we need more context for first prediction
+            if is_first:
+                return ""
+
+            self.full_output.append(out)
+            decoded_out, _ = self.greedy_decoder.decode(out)
+            transcript = decoded_out[0][0]
+
+            # Collapsing characters hack
+            if self.iterating_transcript and transcript and self.iterating_transcript[-1] == transcript[0]:
+                self.iterating_transcript = self.iterating_transcript[:-1] + transcript
+            else:
+                self.iterating_transcript += transcript
+
+        if is_last:
+            # ToDO: Remove but keep here for now
+            #final = torch.cat(self.spectrograms, dim=1)
+            #plt.imshow(final)
+            #plt.colorbar()
+            #plt.show()
+            #self.spectrograms = []
+            if self.lm != "greedy":
+                final_out = torch.cat(self.full_output, dim=1)
+                decoded_out, _ = self.decoder.decode(final_out)
+                decoded_out = decoded_out[0][0]
+                output = ""
+                if len(decoded_out) > 1:
+                    output = str(decoded_out[0]).upper() + decoded_out[1:] + ".\n"
+                self.full_output = []
+                self.iterating_transcript = ""
+                return output
+            else:
+                output = ""
+                if len(self.iterating_transcript) > 1:
+                    output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
+                self.iterating_transcript = ""
+                return output
+
+        return self.iterating_transcript
 
     def transcribe(self, recording, show_all=False):
         recording = self.audio_parser.parse_audio(recording)
