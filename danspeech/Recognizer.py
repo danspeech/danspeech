@@ -60,42 +60,6 @@ class Recognizer(object):
     def update_decoder(self, lm=None, alpha=None, beta=None, beam_width=None):
         self.danspeech_recognizer.update_decoder(lm=lm, alpha=alpha, beta=beta, beam_width=beam_width)
 
-    def record(self, source, duration=None, offset=None):
-        """
-        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (or at the beginning if not specified) into an ``AudioData`` instance, which it returns.
-
-        If ``duration`` is not specified, then it will record until there is no more audio input.
-        """
-        assert isinstance(source, SpeechSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before recording, see documentation for " \
-                                          "``AudioSource``; are you using ``source`` outside of a ``with`` statement? "
-
-        frames_bytes = io.BytesIO()
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
-        elapsed_time = 0
-        offset_time = 0
-        offset_reached = False
-        while True:  # loop for the total number of chunks needed
-            if offset and not offset_reached:
-                offset_time += seconds_per_buffer
-                if offset_time > offset:
-                    offset_reached = True
-
-            buffer = source.stream.read(source.CHUNK)
-            if len(buffer) == 0:
-                break
-
-            if offset_reached or not offset:
-                elapsed_time += seconds_per_buffer
-                if duration and elapsed_time > duration:
-                    break
-
-                frames_bytes.write(buffer)
-
-        frame_data = frames_bytes.getvalue()
-        frames_bytes.close()
-        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-
     def listen(self, source, timeout=None, phrase_time_limit=None):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.

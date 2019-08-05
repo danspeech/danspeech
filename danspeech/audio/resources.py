@@ -23,7 +23,13 @@ except ImportError:
     from urllib.error import URLError, HTTPError
 
 
-def load_audio(path):
+def load_audio_wavPCM(path):
+    """
+    Fast load of wav. This works well if you are certain that your wav files are PCM encoded.
+
+    :param path: Path to wave file
+    :return: Array of data ready for recognition.
+    """
     _, sound = wav.read(path)
 
     if len(sound.shape) > 1:
@@ -33,6 +39,47 @@ def load_audio(path):
             sound = sound.mean(axis=1)  # multiple channels, average
 
     return sound.astype(float)
+
+
+def load_audio(path, duration=None, offset=None):
+    """
+    Loads a sound file.
+
+    Supported formats are WAV, AIFF, FLAC.
+
+    :param path: Path to sound file
+    :param duration: Duration of how much to use. If duration is not specified,
+    then it will record until there is no more audio input.
+    :param offset: Where to start in the clip
+    :return: array ready for speech recognition
+    """
+
+    with SpeechFile(filepath=path) as source:
+        frames_bytes = io.BytesIO()
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
+        elapsed_time = 0
+        offset_time = 0
+        offset_reached = False
+        while True:  # loop for the total number of chunks needed
+            if offset and not offset_reached:
+                offset_time += seconds_per_buffer
+                if offset_time > offset:
+                    offset_reached = True
+
+            buffer = source.stream.read(source.CHUNK)
+            if len(buffer) == 0:
+                break
+
+            if offset_reached or not offset:
+                elapsed_time += seconds_per_buffer
+                if duration and elapsed_time > duration:
+                    break
+
+                frames_bytes.write(buffer)
+
+        frame_data = frames_bytes.getvalue()
+        frames_bytes.close()
+        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH).get_array_data()
 
 
 def shutil_which(pgm):

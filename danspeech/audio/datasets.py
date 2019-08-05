@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 
-from danspeech.audio.resources import load_audio
+from danspeech.audio.resources import load_audio_wavPCM
 
 
 class DanSpeechDataset(Dataset):
@@ -66,7 +66,7 @@ class DanSpeechDataset(Dataset):
         # ToDo: Consider rewriting load audio to use the SpeechFile audio loading setup and benchmark
         f, trans = self.meta[idx]
 
-        recording = load_audio(path=self.path_gen(f))
+        recording = load_audio_wavPCM(path=self.path_gen(f))
         recording = self.audio_parser.parse_audio(recording)
 
         trans = [self.labels_map.get(c) for c in trans]
