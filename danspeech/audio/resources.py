@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import os
 import stat
@@ -21,6 +23,10 @@ except ImportError:
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
+
+
+class SamplingRateWarning(Warning):
+    pass
 
 
 def load_audio_wavPCM(path):
@@ -56,7 +62,7 @@ def load_audio(path, duration=None, offset=None):
 
     with SpeechFile(filepath=path) as source:
         frames_bytes = io.BytesIO()
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
+        seconds_per_buffer = (source.chunk + 0.0) / source.sampling_rate
         elapsed_time = 0
         offset_time = 0
         offset_reached = False
@@ -66,7 +72,7 @@ def load_audio(path, duration=None, offset=None):
                 if offset_time > offset:
                     offset_reached = True
 
-            buffer = source.stream.read(source.CHUNK)
+            buffer = source.stream.read(source.chunk)
             if len(buffer) == 0:
                 break
 
@@ -79,7 +85,7 @@ def load_audio(path, duration=None, offset=None):
 
         frame_data = frames_bytes.getvalue()
         frames_bytes.close()
-        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH).get_array_data()
+        return AudioData(frame_data, source.sampling_rate, source.sampling_width).get_array_data()
 
 
 def shutil_which(pgm):
@@ -164,16 +170,15 @@ class SpeechSource(ABC):
 class SpeechFile(SpeechSource):
 
     def __init__(self, filepath):
-        self.FILEPATH = filepath
-        self.SAMPLE_RATE = None
-        self.DURATION = None
-        self.CHUNK = None
-        self.FRAME_COUNT = None
+        self.filepath = filepath
+        self.sampling_rate = 16000
+        self.duration = None
+        self.chunk = None
+        self.frame_count = None
         self.stream = None
         self.little_endian = False
-        self.data = None
         self.audio_reader = None
-        self.little_endian = False
+        self.sampling_width = None
 
     def __enter__(self):
         """
@@ -187,21 +192,21 @@ class SpeechFile(SpeechSource):
         """
         try:
             # attempt to read the file as WAV
-            self.audio_reader = wave.open(self.FILEPATH, "rb")
+            self.audio_reader = wave.open(self.filepath, "rb")
             # RIFF WAV is a little-endian format (most ``audioop`` operations assume that the frames are stored in little-endian form)
             self.little_endian = True
         except (wave.Error, EOFError):
             try:
                 # attempt to read the file as AIFF
-                self.audio_reader = aifc.open(self.FILEPATH, "rb")
+                self.audio_reader = aifc.open(self.filepath, "rb")
                 # AIFF is a big-endian format
                 self.little_endian = False
             except (aifc.Error, EOFError):
                 # attempt to read the file as FLAC
-                if hasattr(self.FILEPATH, "read"):
-                    flac_data = self.FILEPATH.read()
+                if hasattr(self.filepath, "read"):
+                    flac_data = self.filepath.read()
                 else:
-                    with open(self.FILEPATH, "rb") as f:
+                    with open(self.filepath, "rb") as f:
                         flac_data = f.read()
 
                 # run the FLAC converter with the FLAC data to get the AIFF data
@@ -231,29 +236,36 @@ class SpeechFile(SpeechSource):
                     raise ValueError(
                         "Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format")
                 self.little_endian = False  # AIFF is a big-endian format
+
         assert 1 <= self.audio_reader.getnchannels() <= 2, "Audio must be mono or stereo"
-        self.SAMPLE_WIDTH = self.audio_reader.getsampwidth()
+        self.sampling_width = self.audio_reader.getsampwidth()
 
-        self.SAMPLE_RATE = self.audio_reader.getframerate()
+        if self.sampling_rate != self.audio_reader.getframerate():
+            warnings.warn(
+                "Specified file {0} sampling rate. DanSpeech currently only supports 16000 sampling rate. Will "
+                "resample to 16000 sampling rate".format(self.audio_reader.getframerate()),
+                SamplingRateWarning)
 
-        self.CHUNK = 4096
-        self.FRAME_COUNT = self.audio_reader.getnframes()
-        self.DURATION = self.FRAME_COUNT / float(self.SAMPLE_RATE)
+        self.chunk = 4096
+        self.frame_count = self.audio_reader.getnframes()
+        self.duration = self.frame_count / float(self.sampling_rate)
         self.stream = SpeechFile.SpeechFileStream(self.audio_reader, self.little_endian)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        # only close the file if it was opened by this class in the first place (if the file was originally given as a path)
-        if not hasattr(self.FILEPATH, "read"):
+        # only close the file if it was opened by this class in the first place
+        # (if the file was originally given as a path)
+        if not hasattr(self.filepath, "read"):
             self.audio_reader.close()
         self.stream = None
-        self.DURATION = None
+        self.duration = None
 
     class SpeechFileStream(object):
         def __init__(self, audio_reader, little_endian):
             # an audio file object (e.g., a `wave.Wave_read` instance)
             self.audio_reader = audio_reader
-            # whether the audio data is little-endian (when working with big-endian things, we'll have to convert it to little-endian before we process it)
+            # whether the audio data is little-endian (when working with big-endian things,
+            # we'll have to convert it to little-endian before we process it)
             self.little_endian = little_endian
 
         def read(self, size=-1):
