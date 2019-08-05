@@ -463,5 +463,4 @@ class Recognizer(object):
 
         """
 
-        return self.danspeech_recognizer.transcribe(audio_data.get_array_data(),
-                                                    show_all=show_all)
+        return self.danspeech_recognizer.transcribe(audio_data, show_all=show_all)
