@@ -52,6 +52,9 @@ class Recognizer(object):
             else:
                 self.update_decoder(lm=lm)
 
+        # Being able to bind the microphone to the recognizer is useful.
+        self.microphone = None
+
     def update_model(self, model):
         self.danspeech_recognizer.update_model(model)
 
