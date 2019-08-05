@@ -348,9 +348,9 @@ class Microphone(SpeechSource):
 
         self.device_index = device_index
         self.format = self.pyaudio_module.paInt16  # 16-bit int sampling
-        self.SAMPLE_WIDTH = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
-        self.SAMPLE_RATE = sample_rate  # sampling rate in Hertz
-        self.CHUNK = chunk_size  # number of frames stored in each buffer
+        self.sampling_width = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
+        self.sampling_rate = sample_rate  # sampling rate in Hertz
+        self.chunk = chunk_size  # number of frames stored in each buffer
 
         self.audio = None
         self.stream = None
@@ -421,7 +421,7 @@ class Microphone(SpeechSource):
             self.stream = Microphone.MicrophoneStream(
                 self.audio.open(
                     input_device_index=self.device_index, channels=1, format=self.format,
-                    rate=self.SAMPLE_RATE, frames_per_buffer=self.CHUNK, input=True,
+                    rate=self.sampling_rate, frames_per_buffer=self.chunk, input=True,
                 )
             )
         except Exception:

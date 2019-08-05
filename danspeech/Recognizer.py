@@ -6,13 +6,9 @@ import math
 import os
 import threading
 
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
-
-from danspeech.errors.recognizer_errors import UnknownValueError, RequestError, ModelNotInitialized, WaitTimeoutError
+from danspeech.errors.recognizer_errors import ModelNotInitialized, WaitTimeoutError
 from danspeech.DanSpeechRecognizer import DanSpeechRecognizer
-from danspeech.audio.resources import SpeechSource, AudioData, SpeechFile
+from danspeech.audio.resources import SpeechSource, AudioData
 
 
 class Recognizer(object):
@@ -76,7 +72,7 @@ class Recognizer(object):
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
-        seconds_per_buffer = float(source.CHUNK) / source.SAMPLE_RATE
+        seconds_per_buffer = float(source.chunk) / source.sampling_rate
         pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
         phrase_buffer_count = int(math.ceil(self.phrase_threshold / seconds_per_buffer))  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
         non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
@@ -101,7 +97,7 @@ class Recognizer(object):
                     frames.popleft()
 
                 # detect whether speaking has started on audio input
-                energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # energy of the audio signal
+                energy = audioop.rms(buffer, source.sampling_width)  # energy of the audio signal
                 if energy > self.energy_threshold: break
 
                 # dynamically adjust the energy threshold using asymmetric weighted average
@@ -119,13 +115,13 @@ class Recognizer(object):
                 if phrase_time_limit and elapsed_time - phrase_start_time > phrase_time_limit:
                     break
 
-                buffer = source.stream.read(source.CHUNK)
+                buffer = source.stream.read(source.chunk)
                 if len(buffer) == 0: break  # reached end of the stream
                 frames.append(buffer)
                 phrase_count += 1
 
                 # check if speaking has stopped for longer than the pause threshold on the audio input
-                energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
+                energy = audioop.rms(buffer, source.sampling_width)  # unit energy of the audio signal within the buffer
                 if energy > self.energy_threshold:
                     pause_count = 0
                 else:
@@ -141,7 +137,7 @@ class Recognizer(object):
         for i in range(pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
         frame_data = b"".join(frames)
 
-        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+        return AudioData(frame_data, source.sampling_rate, source.sampling_width)
 
     def adjust_for_ambient_noise(self, source, duration=1):
         """
@@ -155,15 +151,15 @@ class Recognizer(object):
         assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
+        seconds_per_buffer = (source.chunk + 0.0) / source.sampling_rate
         elapsed_time = 0
 
         # adjust energy threshold until a phrase starts
         while True:
             elapsed_time += seconds_per_buffer
             if elapsed_time > duration: break
-            buffer = source.stream.read(source.CHUNK)
-            energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # energy of the audio signal
+            buffer = source.stream.read(source.chunk)
+            energy = audioop.rms(buffer, source.sampling_width)  # energy of the audio signal
 
             # dynamically adjust the energy threshold using asymmetric weighted average
             damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
@@ -202,73 +198,6 @@ class Recognizer(object):
         listener_thread.daemon = True
         listener_thread.start()
         return stopper
-
-    def recognize_google(self, audio_data, key=None, language="da-DK", pfilter=0, show_all=False):
-        """
-        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Speech Recognition API.
-
-        The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box. This should generally be used for personal or testing purposes only, as it **may be revoked by Google at any time**.
-
-        To obtain your own API key, simply following the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site. In the Google Developers Console, Google Speech Recognition is listed as "Speech API".
-
-        The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language tags can be found in this `StackOverflow answer <http://stackoverflow.com/a/14302134>`__.
-
-        The profanity filter level can be adjusted with ``pfilter``: 0 - No filter, 1 - Only shows the first character and replaces the rest with asterisks. The default is level 0.
-
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
-
-        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
-        """
-        assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
-        assert key is None or isinstance(key, str), "``key`` must be ``None`` or a string"
-        assert isinstance(language, str), "``language`` must be a string"
-
-        flac_data = audio_data.get_flac_data(
-            convert_rate=None if audio_data.sample_rate >= 8000 else 8000,  # audio samples must be at least 8 kHz
-            convert_width=2  # audio samples must be 16-bit
-        )
-        if key is None: key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
-        url = "http://www.google.com/speech-api/v2/recognize?{}".format(urlencode({
-            "client": "chromium",
-            "lang": language,
-            "key": key,
-            "pFilter": pfilter
-        }))
-        request = Request(url, data=flac_data,
-                          headers={"Content-Type": "audio/x-flac; rate={}".format(audio_data.sample_rate)})
-
-        # obtain audio transcription results
-        try:
-            response = urlopen(request, timeout=self.operation_timeout)
-        except HTTPError as e:
-            raise RequestError("recognition request failed: {}".format(e.reason))
-        except URLError as e:
-            raise RequestError("recognition connection failed: {}".format(e.reason))
-        response_text = response.read().decode("utf-8")
-
-        # ignore any blank blocks
-        actual_result = []
-        for line in response_text.split("\n"):
-            if not line: continue
-            result = json.loads(line)["result"]
-            if len(result) != 0:
-                actual_result = result[0]
-                break
-
-        # return results
-        if show_all: return actual_result
-        if not isinstance(actual_result, dict) or len(
-                actual_result.get("alternative", [])) == 0: raise UnknownValueError()
-
-        if "confidence" in actual_result["alternative"]:
-            # return alternative with highest confidence score
-            best_hypothesis = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
-        else:
-            # when there is no confidence available, we arbitrarily choose the first hypothesis.
-            best_hypothesis = actual_result["alternative"][0]
-        if "transcript" not in best_hypothesis:
-            raise UnknownValueError()
-        return best_hypothesis["transcript"]
 
     def recognize(self, audio_data, show_all=False):
         """
