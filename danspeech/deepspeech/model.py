@@ -507,6 +507,7 @@ class DeepSpeechStreamInference(nn.Module):
         self.rnn_type = rnn_type
         self.audio_conf = audio_conf or {}
         self.labels = labels
+        self.context = context
         self.conv = MaskConvStream(nn.Sequential(
             nn.Conv2d(1, 32, kernel_size=(41, 11), stride=(2, 2), padding=(20, 0)),
             nn.BatchNorm2d(32),

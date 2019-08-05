@@ -5,6 +5,7 @@ import json
 import math
 import os
 import threading
+import time
 
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -15,7 +16,6 @@ from danspeech.DanSpeechRecognizer import DanSpeechRecognizer
 from danspeech.audio.resources import SpeechSource, AudioData, SpeechFile
 import numpy as np
 import librosa
-
 
 
 class Recognizer(object):
@@ -47,13 +47,16 @@ class Recognizer(object):
         self.operation_timeout = None
         self.danspeech_recognizer = DanSpeechRecognizer(**kwargs)
 
+        self.stream = False
+        self.stream_thread_stopper = None
+
         if model:
             self.update_model(model)
 
         if lm:
             if not model:
-                    raise ModelNotInitialized("Trying to initialize language model without also choosing a DanSpeech "
-                                              "acoustic model.")
+                raise ModelNotInitialized("Trying to initialize language model without also choosing a DanSpeech "
+                                          "acoustic model.")
             else:
                 self.update_decoder(lm=lm)
 
@@ -99,7 +102,7 @@ class Recognizer(object):
         frames_bytes.close()
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
-    def listen_stream(self, source, timeout=None, phrase_time_limit=None):
+    def listen_stream(self, source, frames_first, frames_rest, timeout=None, phrase_time_limit=None):
         """
         Generator recording
 
@@ -118,9 +121,13 @@ class Recognizer(object):
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
         seconds_per_buffer = float(source.CHUNK) / source.SAMPLE_RATE
-        pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
-        phrase_buffer_count = int(math.ceil(self.phrase_threshold / seconds_per_buffer))  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
-        non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
+        pause_buffer_count = int(math.ceil(
+            self.pause_threshold / seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
+        phrase_buffer_count = int(math.ceil(
+            self.phrase_threshold / seconds_per_buffer))  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
+        non_speaking_buffer_count = int(math.ceil(
+            self.non_speaking_duration / seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
+
 
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0  # number of seconds of audio read
@@ -182,12 +189,12 @@ class Recognizer(object):
                     break
 
                 if is_first:
-                    if len(frames) == 9:
+                    if len(frames) == frames_first:
                         is_first = False
                         yield False, self.get_audio_data(frames, source)
                         frames = []
                 else:
-                    if len(frames) == 7:
+                    if len(frames) == frames_rest:
                         yield False, self.get_audio_data(frames, source)
                         frames = []
 
@@ -209,7 +216,6 @@ class Recognizer(object):
         frame_data = b"".join(frames)
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH).get_array_data()
 
-
     def listen(self, source, timeout=None):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
@@ -225,9 +231,12 @@ class Recognizer(object):
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
         seconds_per_buffer = float(source.CHUNK) / source.SAMPLE_RATE
-        pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
-        phrase_buffer_count = int(math.ceil(self.phrase_threshold / seconds_per_buffer))  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
-        non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
+        pause_buffer_count = int(math.ceil(
+            self.pause_threshold / seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
+        phrase_buffer_count = int(math.ceil(
+            self.phrase_threshold / seconds_per_buffer))  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
+        non_speaking_buffer_count = int(math.ceil(
+            self.non_speaking_duration / seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
 
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0  # number of seconds of audio read
@@ -246,7 +255,8 @@ class Recognizer(object):
                 if len(buffer) == 0:
                     break  # reached end of the stream
                 frames.append(buffer)
-                if len(frames) > non_speaking_buffer_count:  # ensure we only keep the needed amount of non-speaking buffers
+                if len(
+                        frames) > non_speaking_buffer_count:  # ensure we only keep the needed amount of non-speaking buffers
                     frames.popleft()
 
                 # detect whether speaking has started on audio input
@@ -279,10 +289,12 @@ class Recognizer(object):
 
             # check how long the detected phrase is, and retry listening if the phrase is too short
             phrase_count -= pause_count  # exclude the buffers for the pause before the phrase
-            if phrase_count >= phrase_buffer_count or len(buffer) == 0: break  # phrase is long enough or we've reached the end of the stream, so stop listening
+            if phrase_count >= phrase_buffer_count or len(
+                    buffer) == 0: break  # phrase is long enough or we've reached the end of the stream, so stop listening
 
         # obtain frame data
-        for i in range(pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
+        for i in range(
+                pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
         frame_data = b"".join(frames)
 
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
@@ -314,7 +326,7 @@ class Recognizer(object):
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
-    def listen_in_background(self, source):
+    def listen_in_background(self, source, first_required_frames, general_required_frames):
         """
         Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
@@ -324,49 +336,30 @@ class Recognizer(object):
 
         """
         assert isinstance(source, SpeechSource), "Source must be an audio source"
-        running = [True]
 
-        self.danspeech_recognizer.enable_streaming()
+        # These act as globals variables for thread helper functions
+        running = [True]
+        data = []
+        processed_background = [0]
+        processed_data_getter = [0]
 
         def threaded_listen():
-
+            # Trhead to run in background
+            processed = 0
             with source as s:
                 while running[0]:
-                    generator = self.listen_stream(s)
-                    iterator = 0
-                    first_samples = 8680
-                    is_first = True
-                    data = None
-                    try:  # listen for 1 second, then check again if the stop function has been called
+                    generator = self.listen_stream(s, first_required_frames, general_required_frames)
+                    try:  # Listen until silence has been detected
                         while True:
-                            if is_first:
-                                is_last, data = next(generator)
-                            else:
-                                is_last, temp = next(generator)
-                                # temp /= 32767 # Normalize
-                                data = np.concatenate((data, temp))
-                                nr_data_points = len(data) - iterator
-                                data_rest = nr_data_points % 160
-                                consume = nr_data_points - data_rest
+                            is_last_, temp = next(generator)
+                            data.append((is_last_, temp))
 
-                            if running[0]:
-                                if is_first:
-                                    print(self.danspeech_recognizer.streaming_transcribe(data[:first_samples], is_last, is_first))
-                                    iterator += first_samples - 160
-                                elif is_last:
-                                    print(self.danspeech_recognizer.streaming_transcribe(data[iterator:], is_last, is_first))
-                                else:
-                                    print(self.danspeech_recognizer.streaming_transcribe(data[iterator:iterator+consume], is_last, is_first))
-                                    iterator += consume - 160
-
-                                is_first = False
-                            if is_last:
-                                mean = np.mean(data)
-                                std = np.std(data)
-                                data -= mean
-                                data /= std
-                                librosa.output.write_wav("/Users/arpelarpe/programming_projects/danspeech/example_files/test.wav", y=data, sr=16000)
+                            # If is last, we start new listen generator
+                            if is_last_:
+                                processed += 1
+                                processed_background[0] = processed
                                 break
+
                     except WaitTimeoutError:  # listening timed out, just try again
                         pass
 
@@ -376,10 +369,126 @@ class Recognizer(object):
             if wait_for_stop:
                 listener_thread.join()  # block until the background thread is done, which can take around 1 second
 
+        def get_data(index):
+            # We need while loop in case data processing (model prediction) is faster than listening
+            should_try = True
+
+            # If background thread is ahead, get all data and predict
+            if processed_background[0] > processed_data_getter[0]:
+                first = True
+                while should_try:
+                    if first:
+                        is_last_, audio = data[index]
+                        first = False
+                    else:
+                        is_last_, temp = data[index]
+                        audio = np.concatenate((audio, temp))
+
+                    if not is_last_:
+                        index += 1
+                    else:
+                        should_try = False
+
+                # Clean up
+                for i in range(index + 1):
+                    data.pop(0)
+
+                processed_data_getter[0] += 1
+                return is_last_, audio
+
+            while should_try:
+                try:
+                    is_last_, audio = data[index]
+                    # If ending, clean up data that has already been processed
+                    if is_last_:
+                        processed_data_getter[0] += 1
+                        for i in range(index+1):
+                            data.pop(0)
+                    should_try = False
+                except IndexError:
+                    time.sleep(0.2) # Wait 200ms and try again
+
+            return is_last_, audio
+
         listener_thread = threading.Thread(target=threaded_listen)
         listener_thread.daemon = True
         listener_thread.start()
-        return stopper
+        return stopper, get_data
+
+    def stop_microphone_streaming(self):
+        print("Stopping microphone stream...")
+        self.stream_thread_stopper(wait_for_stop=False)
+        self.stream = False
+
+    def microphone_streaming(self, source):
+        self.danspeech_recognizer.enable_streaming()
+        lookahead_context = self.danspeech_recognizer.model.context
+        required_spec_frames = (lookahead_context - 1) * 2
+        samples_pr_10ms = int(source.SAMPLE_RATE / 100)
+
+        # First takes two samples pr 10ms, the rest needs 160 due to overlapping
+        general_sample_requirement = samples_pr_10ms * 2 + (samples_pr_10ms * (required_spec_frames - 1))
+
+        # First pass, we need more samples due to padding of initial conv layers
+        first_samples_requirement = general_sample_requirement + (samples_pr_10ms * 15)
+
+        samples_pr_frame = int(source.CHUNK)
+
+        # Init general required frames from source
+        counter = 0
+        while counter * samples_pr_frame < general_sample_requirement:
+            counter += 1
+
+        general_required_frames = counter
+
+        while counter * samples_pr_frame < first_samples_requirement:
+            counter += 1
+
+        first_required_frames = counter
+
+        data_array = None
+        data_counter = 0
+        iterator = 0
+        is_first = True
+        self.stream = True
+
+        stopper, data_getter = self.listen_in_background(source, first_required_frames, general_required_frames)
+        self.stream_thread_stopper = stopper
+
+        while self.stream:
+            if is_first:
+                is_last, data_array = data_getter(data_counter)
+                data_counter += 1
+            else:
+                is_last, temp = data_getter(data_counter)
+                data_counter += 1
+                data_array = np.concatenate((data_array, temp))
+                nr_data_points = len(data_array) - iterator
+                data_rest = nr_data_points % samples_pr_10ms
+                consume = nr_data_points - data_rest
+
+            if is_first:
+                output = self.danspeech_recognizer.streaming_transcribe(data_array[:first_samples_requirement], is_last, is_first)
+                iterator += first_samples_requirement - samples_pr_10ms
+                is_first = False
+            elif is_last:
+                output = self.danspeech_recognizer.streaming_transcribe(data_array[iterator:], is_last, is_first)
+            else:
+                output = self.danspeech_recognizer.streaming_transcribe(data_array[iterator:iterator + consume],
+                                                                        is_last, is_first)
+                iterator += consume - samples_pr_10ms
+
+            if is_last and not output:
+                yield is_last, None
+            elif output:
+                yield is_last, output
+
+            # Reset parameters
+            if is_last:
+                data_counter = 0
+                iterator = 0
+                is_first = True
+                data_array = None
 
     def recognize_google(self, audio_data, key=None, language="da-DK", pfilter=0, show_all=False):
         """

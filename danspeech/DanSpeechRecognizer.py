@@ -3,7 +3,7 @@ import torch
 from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized
 from danspeech.audio.parsers import SpectrogramAudioParser, InferenceSpectrogramAudioParser
-import matplotlib.pyplot as plt
+
 
 class DanSpeechRecognizer(object):
 
@@ -43,8 +43,6 @@ class DanSpeechRecognizer(object):
         self.streaming = False
         self.full_output = []
         self.iterating_transcript = ""
-        self.full_transcription = ""
-        self.spectrograms = []
 
     def update_model(self, model):
         self.model = model.to(self.device)
@@ -104,13 +102,14 @@ class DanSpeechRecognizer(object):
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
         self.iterating_transcript = ""
         self.full_output = []
-        self.spectrograms = []
+        #self.spectrograms = []
 
     def streaming_transcribe(self, recording, is_last, is_first):
         recording = self.audio_parser.parse_audio(recording, is_last)
 
         if len(recording) != 0:
-            self.spectrograms.append(recording)
+            # ToDO: Remove but keep here for now
+            #self.spectrograms.append(recording)
             # Convert recording to batch for model purpose
             recording = recording.view(1, 1, recording.size(0), recording.size(1))
 
@@ -132,28 +131,28 @@ class DanSpeechRecognizer(object):
                 self.iterating_transcript += transcript
 
         if is_last:
-            final = torch.cat(self.spectrograms, dim=1)
-            plt.imshow(final)
-            plt.colorbar()
-            plt.show()
-            self.spectrograms = []
+            # ToDO: Remove but keep here for now
+            #final = torch.cat(self.spectrograms, dim=1)
+            #plt.imshow(final)
+            #plt.colorbar()
+            #plt.show()
+            #self.spectrograms = []
             if self.lm != "greedy":
                 final_out = torch.cat(self.full_output, dim=1)
                 decoded_out, _ = self.decoder.decode(final_out)
                 decoded_out = decoded_out[0][0]
+                output = ""
                 if len(decoded_out) > 1:
                     output = str(decoded_out[0]).upper() + decoded_out[1:] + ".\n"
-                    self.full_transcription += output
                 self.full_output = []
                 self.iterating_transcript = ""
-
-                return "Final: " + self.full_transcription
+                return output
             else:
+                output = ""
                 if len(self.iterating_transcript) > 1:
                     output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
-                    self.full_transcription += output
                 self.iterating_transcript = ""
-                return "Final: " + self.full_transcription
+                return output
 
         return self.iterating_transcript
 
