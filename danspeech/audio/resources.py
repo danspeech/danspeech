@@ -313,10 +313,10 @@ class Microphone(SpeechSource):
     Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
     """
 
-    def __init__(self, device_index=None, sample_rate=None, chunk_size=1024):
+    def __init__(self, device_index=None, sampling_rate=None, chunk_size=1024):
         assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
-        assert sample_rate is None or (
-                isinstance(sample_rate, int) and sample_rate > 0), "Sample rate must be None or a positive integer"
+        assert sampling_rate is None or (
+                isinstance(sampling_rate, int) and sampling_rate > 0), "Sample rate must be None or a positive integer"
         assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
 
         # set up PyAudio
@@ -327,19 +327,19 @@ class Microphone(SpeechSource):
             if device_index is not None:  # ensure device index is in range
                 assert 0 <= device_index < count, "Device index out of range ({} devices available; device index should be between 0 and {} inclusive)".format(
                     count, count - 1)
-            if sample_rate is None:  # automatically set the sample rate to the hardware's default sample rate if not specified
+            if sampling_rate is None:  # automatically set the sample rate to the hardware's default sample rate if not specified
                 device_info = audio.get_device_info_by_index(
                     device_index) if device_index is not None else audio.get_default_input_device_info()
                 assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info[
                     "defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
-                sample_rate = int(device_info["defaultSampleRate"])
+                sampling_rate = int(device_info["defaultSampleRate"])
         finally:
             audio.terminate()
 
         self.device_index = device_index
         self.format = self.pyaudio_module.paInt16  # 16-bit int sampling
         self.sampling_width = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
-        self.sampling_rate = sample_rate  # sampling rate in Hertz
+        self.sampling_rate = sampling_rate  # sampling rate in Hertz
         self.chunk = chunk_size  # number of frames stored in each buffer
 
         self.audio = None
@@ -570,6 +570,6 @@ if __name__ == '__main__':
     # with SpeechFile(filepath=file_path, sampling_rate=16000) as source:
     #    pass
 
-    m = Microphone(sample_rate=16000)
+    m = Microphone(sampling_rate=16000)
     print(Microphone.list_microphone_names())
     # print(m.list_microphone_names())

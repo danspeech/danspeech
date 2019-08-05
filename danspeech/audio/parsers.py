@@ -73,8 +73,8 @@ class InferenceSpectrogramAudioParser(AudioParser):
         # inits all audio configs
         super(InferenceSpectrogramAudioParser, self).__init__(audio_config)
 
-        self.n_fft = int(self.sample_rate * self.window_size)
-        self.hop_length = int(self.sample_rate * self.window_stride)
+        self.n_fft = int(self.sampling_rate * self.window_size)
+        self.hop_length = int(self.sampling_rate * self.window_stride)
         self.context = context
         self.dataset_mean = 5.492418704733003
         self.dataset_std = 1.7552755216970917
