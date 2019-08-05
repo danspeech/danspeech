@@ -14,16 +14,6 @@ import io
 from abc import ABC, abstractmethod
 import scipy.io.wavfile as wav
 
-# attempt to use the Python 2 modules
-try:
-    from urllib import urlencode
-    from urllib2 import Request, urlopen, URLError, HTTPError
-except ImportError:
-    # use the Python 3 modules
-    from urllib.parse import urlencode
-    from urllib.request import Request, urlopen
-    from urllib.error import URLError, HTTPError
-
 
 class SamplingRateWarning(Warning):
     pass
@@ -569,77 +559,6 @@ class AudioData(object):
         raw_data = self.get_raw_data(convert_rate, convert_width)
         sample_width = self.sample_width if convert_width is None else convert_width
         return _wav2array(1, sample_width, raw_data).squeeze().astype(float)
-
-    def get_aiff_data(self, convert_rate=None, convert_width=None):
-        """
-        Returns a byte string representing the contents of an AIFF-C file containing the audio represented by the ``AudioData`` instance.
-
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
-
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
-
-        Writing these bytes directly to a file results in a valid `AIFF-C file <https://en.wikipedia.org/wiki/Audio_Interchange_File_Format>`__.
-        """
-        raw_data = self.get_raw_data(convert_rate, convert_width)
-        sample_rate = self.sample_rate if convert_rate is None else convert_rate
-        sample_width = self.sample_width if convert_width is None else convert_width
-
-        # the AIFF format is big-endian, so we need to covnert the little-endian raw data to big-endian
-        if hasattr(audioop, "byteswap"):  # ``audioop.byteswap`` was only added in Python 3.4
-            raw_data = audioop.byteswap(raw_data, sample_width)
-        else:  # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
-            raw_data = raw_data[sample_width - 1::-1] + b"".join(
-                raw_data[i + sample_width:i:-1] for i in range(sample_width - 1, len(raw_data), sample_width))
-
-        # generate the AIFF-C file contents
-        with io.BytesIO() as aiff_file:
-            aiff_writer = aifc.open(aiff_file, "wb")
-            try:  # note that we can't use context manager, since that was only added in Python 3.4
-                aiff_writer.setframerate(sample_rate)
-                aiff_writer.setsampwidth(sample_width)
-                aiff_writer.setnchannels(1)
-                aiff_writer.writeframes(raw_data)
-                aiff_data = aiff_file.getvalue()
-            finally:  # make sure resources are cleaned up
-                aiff_writer.close()
-        return aiff_data
-
-    def get_flac_data(self, convert_rate=None, convert_width=None):
-        """
-        Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
-
-        Note that 32-bit FLAC is not supported. If the audio data is 32-bit and ``convert_width`` is not specified, then the resulting FLAC will be a 24-bit FLAC.
-
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
-
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
-
-        Writing these bytes directly to a file results in a valid `FLAC file <https://en.wikipedia.org/wiki/FLAC>`__.
-        """
-        assert convert_width is None or (
-                convert_width % 1 == 0 and 1 <= convert_width <= 3), "Sample width to convert to must be between 1 and 3 inclusive"
-
-        if self.sample_width > 3 and convert_width is None:  # resulting WAV data would be 32-bit, which is not convertable to FLAC using our encoder
-            convert_width = 3  # the largest supported sample width is 24-bit, so we'll limit the sample width to that
-
-        # run the FLAC converter with the WAV data to get the FLAC data
-        wav_data = self.get_wav_data(convert_rate, convert_width)
-        flac_converter = get_flac_converter()
-        if os.name == "nt":  # on Windows, specify that the process is to be started without showing a console window
-            startup_info = subprocess.STARTUPINFO()
-            startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # specify that the wShowWindow field of `startup_info` contains a value
-            startup_info.wShowWindow = subprocess.SW_HIDE  # specify that the console window should be hidden
-        else:
-            startup_info = None  # default startupinfo
-        process = subprocess.Popen([
-            flac_converter,
-            "--stdout", "--totally-silent",
-            # put the resulting FLAC file in stdout, and make sure it's not mixed with any program output
-            "--best",  # highest level of compression available
-            "-",  # the input FLAC file contents will be given in stdin
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=startup_info)
-        flac_data, stderr = process.communicate(wav_data)
-        return flac_data
 
 
 """
