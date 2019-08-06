@@ -46,7 +46,7 @@ class DanSpeechRecognizer(object):
         self.iterating_transcript = ""
 
     def update_model(self, model):
-        self.audio_config = self.model.audio_conf
+        self.audio_config = model.audio_conf
         self.model = model.to(self.device)
         self.model.eval()
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
