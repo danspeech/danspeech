@@ -12,6 +12,7 @@ class DanSpeechRecognizer(object):
                  beam_width=64):
 
         self.device = torch.device("cuda" if with_gpu else "cpu")
+        print(self.device)
 
         # Init model if given
         if model_name:
@@ -45,9 +46,9 @@ class DanSpeechRecognizer(object):
         self.iterating_transcript = ""
 
     def update_model(self, model):
+        self.audio_config = self.model.audio_conf
         self.model = model.to(self.device)
         self.model.eval()
-        self.audio_config = self.model.audio_conf
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
 
         # When updating model, always update decoder because of labels
@@ -159,7 +160,7 @@ class DanSpeechRecognizer(object):
     def transcribe(self, recording, show_all=False):
         recording = self.audio_parser.parse_audio(recording)
         recording = recording.view(1, 1, recording.size(0), recording.size(1))
-        recording.to(self.device)
+        recording = recording.to(self.device)
         input_sizes = torch.IntTensor([recording.size(3)]).int()
         out, output_sizes = self.model(recording, input_sizes)
         decoded_output, _ = self.decoder.decode(out, output_sizes)
