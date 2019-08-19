@@ -122,6 +122,7 @@ class DanSpeechRecognizer(object):
     def streaming_transcribe(self, recording, is_last, is_first):
         recording = self.audio_parser.parse_audio(recording, is_last)
 
+        transcript = ""
         if len(recording) != 0:
             # ToDO: Remove but keep here for now
             self.spectrograms.append(recording)
@@ -141,7 +142,8 @@ class DanSpeechRecognizer(object):
 
             # Collapsing characters hack
             if self.iterating_transcript and transcript and self.iterating_transcript[-1] == transcript[0]:
-                self.iterating_transcript = self.iterating_transcript[:-1] + transcript
+                self.iterating_transcript = self.iterating_transcript + transcript[1:]
+                transcript = transcript[1:]
             else:
                 self.iterating_transcript += transcript
 
@@ -173,7 +175,7 @@ class DanSpeechRecognizer(object):
                 self.iterating_transcript = ""
                 return output
 
-        return self.iterating_transcript
+        return transcript
 
     def transcribe(self, recording, show_all=False):
         recording = self.audio_parser.parse_audio(recording)
