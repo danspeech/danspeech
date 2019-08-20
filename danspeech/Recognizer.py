@@ -616,7 +616,6 @@ class Recognizer(object):
             if behind < 0 and behind != 0:
                 time.sleep(abs(behind))
 
-
     def recognize(self, audio_data, show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using a loceal DanSpeech model.

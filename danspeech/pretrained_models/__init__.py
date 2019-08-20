@@ -4,4 +4,5 @@ from .rnn3 import Rnn3
 from .units400 import Units400
 from .uni_stream import StreamingRNN
 from .uni_stream_large import StreamingRNNLarge
+from .danspeech_folketinget import DanSpeechFolketinget
 

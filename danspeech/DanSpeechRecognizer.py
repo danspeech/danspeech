@@ -3,8 +3,8 @@ import torch
 from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized
 from danspeech.audio.parsers import SpectrogramAudioParser, InferenceSpectrogramAudioParser
-from danspeech.pretrained_models import DanSpeechPrimary
-from danspeech.language_models import DSL3gram
+from danspeech.pretrained_models import DanSpeechFolketinget
+from danspeech.language_models import DSL3gram, Folketinget3gram
 import matplotlib.pyplot as plt
 
 class DanSpeechRecognizer(object):
@@ -47,12 +47,12 @@ class DanSpeechRecognizer(object):
         self.full_output = []
         self.iterating_transcript = ""
 
-        self.second_model = DanSpeechPrimary()
+        self.second_model = DanSpeechFolketinget()
         self.second_labels = self.second_model.labels
         self.audio_config = self.second_model.audio_conf
         self.second_model = self.second_model.to(self.device)
         self.second_model.eval()
-        self.second_decoder_ = DSL3gram()
+        self.second_decoder_ = Folketinget3gram()
 
         # When updating model, always update decoder because of labels
         self.second_decoder = BeamCTCDecoder(labels=self.second_labels, lm_path=self.second_decoder_,
