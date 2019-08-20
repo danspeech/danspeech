@@ -370,7 +370,7 @@ class Microphone(SpeechSource):
 
         Each key in the returned dictionary can be passed to the ``Microphone`` constructor to use that microphone. For example, if the return value is ``{3: "HDA Intel PCH: ALC3232 Analog (hw:1,0)"}``, you can do ``Microphone(device_index=3)`` to use that microphone.
         """
-        pyaudio_module = Microphone.get_pyaudio()
+        pyaudio_module = get_pyaudio()
         audio = pyaudio_module.PyAudio()
         try:
             result = {}
