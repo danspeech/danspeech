@@ -322,6 +322,7 @@ class Microphone(SpeechSource):
         # set up PyAudio
         self.pyaudio_module = get_pyaudio()
         audio = self.pyaudio_module.PyAudio()
+        print(audio.get_default_input_device_info())
         try:
             count = audio.get_device_count()  # obtain device count
             if device_index is not None:  # ensure device index is in range

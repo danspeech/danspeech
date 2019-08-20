@@ -3,10 +3,11 @@ import collections
 import math
 import threading
 import time
+import subprocess
 
 from danspeech.errors.recognizer_errors import ModelNotInitialized, WaitTimeoutError
 from danspeech.DanSpeechRecognizer import DanSpeechRecognizer
-from danspeech.audio.resources import SpeechSource, AudioData
+from danspeech.audio.resources import SpeechSource, AudioData, load_audio
 import numpy as np
 
 
@@ -290,6 +291,7 @@ class Recognizer(object):
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
+
     def listen_in_background(self, source, first_required_frames, general_required_frames):
         """
         Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
@@ -384,6 +386,10 @@ class Recognizer(object):
         self.stream_thread_stopper(wait_for_stop=False)
         self.stream = False
 
+    def stop_video_stream(self):
+        print("Stopping video stream...")
+        self.stream = False
+
     def microphone_streaming(self, source):
         self.danspeech_recognizer.enable_streaming()
         lookahead_context = self.danspeech_recognizer.model.context
@@ -455,6 +461,162 @@ class Recognizer(object):
                 is_first = True
                 data_array = None
 
+    def listen_video(self):
+        self.danspeech_recognizer.enable_streaming()
+        lookahead_context = self.danspeech_recognizer.model.context
+        required_spec_frames = (lookahead_context - 1) * 2
+        samples_pr_10ms = int(16000 / 100)
+        # First takes two samples pr 10ms, the rest needs 160 due to overlapping
+        general_sample_requirement = samples_pr_10ms * 2 + (samples_pr_10ms * (required_spec_frames - 1))
+
+        offset = 12 * 60 * 16000
+
+        # First pass, we need more samples due to padding of initial conv layers
+        first_samples_requirement = general_sample_requirement + (samples_pr_10ms * 15)
+
+        samples_pr_frame = 1024
+
+        # Init general required frames from source
+        counter = 0
+        while counter * samples_pr_frame < general_sample_requirement:
+            counter += 1
+
+        general_required_frames = counter
+
+        while counter * samples_pr_frame < first_samples_requirement:
+            counter += 1
+
+        first_required_frames = counter
+        #print('start video')
+        #p = subprocess.Popen(['mplayer', 'valg_moede.mp4'])
+
+        audio = load_audio(path="/home/arpelarpe/programming_projects/danish-speech-recognition/dummy_scripts/valg_moede.wav")[offset:]
+        # seconds of non-speaking audio before a phrase is considered complete
+        pause_threshold = 0.5
+        pause_buffer_count = math.ceil(pause_threshold / (1024 / 16000))
+        print(pause_buffer_count)
+        print(general_required_frames)
+        print(first_required_frames)
+
+        energy_threshold = 2000
+
+        # start 60 seconds in
+        iterator = 0
+        step = 1024
+        max_length = len(audio)
+        behind = 0
+
+        is_speaking = False
+        pause_count = 0
+        is_first = True
+        self.stream = True
+        frames_counter = 0
+        output = None
+        output_iterator = 0
+        yield_output = False
+        should_reset = False
+
+        start = time.time()
+        total_processed = 0
+        while self.stream:
+            # Stop criteria
+            if iterator + step > max_length:
+                self.stream = False
+                break
+
+            temp_data = audio[iterator:iterator + step].astype(np.float)
+            energy = np.sqrt((temp_data * temp_data).sum() / (1. * len(temp_data)))
+
+            # If energy is above, then speaking has started
+            if energy > energy_threshold and not is_speaking:
+                # General requirements for start
+                is_speaking = True
+                is_first = True
+                is_last = False
+                # We need 10ms for left side of spectrogram
+                start_index = iterator - samples_pr_10ms
+
+            if is_speaking:
+                frames_counter += 1
+
+            # First case if enough frames have occurred
+            if is_first and frames_counter == first_required_frames:
+                # print("IS FIRST")
+                # Start index and all of the raw samples required
+                data = audio[start_index:start_index+first_samples_requirement]
+
+                # This is how much we processed (keep 10ms for spec gen)
+                output_iterator += (start_index+first_samples_requirement - samples_pr_10ms)
+
+                # First output should not be yielded! output will be none!
+                output = self.danspeech_recognizer.streaming_transcribe(data, is_last, is_first)
+                output = None
+                is_first = False
+                frames_counter = 0
+                yield_output = True
+
+            # Control whether we should stop
+            if energy > energy_threshold:
+                pause_count = 0
+            else:
+                pause_count += 1
+
+            if pause_count > pause_buffer_count and is_speaking:  # end of the phrase
+                pause_count = 0
+                is_last = True
+                end = time.time()
+                if end - start > 0.064:
+                    behind += (end - start) - 0.064
+
+            # General case if enough frames have occurred
+            if is_speaking and not is_last and not is_first and frames_counter == general_required_frames:
+                #print("IS GENERAL")
+                # Add a consume based on time
+
+                consume = general_sample_requirement
+
+                data = audio[output_iterator:output_iterator+consume]
+                output = self.danspeech_recognizer.streaming_transcribe(data, is_last, is_first)
+                output_iterator += consume - samples_pr_10ms
+                frames_counter = 0
+                yield_output = True
+            # Is last case
+            elif is_speaking and is_last:
+                #print("IS LAST")
+                data = audio[output_iterator:iterator]
+                output = self.danspeech_recognizer.streaming_transcribe(data, is_last, is_first)
+                frames_counter = 0
+                yield_output = True
+                should_reset = True
+                is_speaking = False
+                # RESET
+
+            if yield_output:
+                yield_output = False
+                if is_last and not output:
+                    yield is_last, None
+                elif output:
+                    yield is_last, output
+
+            # Reset parameters
+            if should_reset:
+                is_last = False
+                should_reset = False
+                output_iterator = 0
+
+            iterator += step
+
+            end = time.time()
+            current_time_as_should = end - start
+            current_time_as_loop = iterator / 16000
+
+            # Seconds behind
+            behind = current_time_as_should - current_time_as_loop
+
+            if behind < 0 and behind != 0:
+                time.sleep(abs(behind))
+
+
     def recognize(self, audio_data, show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using a loceal DanSpeech model.
@@ -467,3 +629,21 @@ class Recognizer(object):
         """
 
         return self.danspeech_recognizer.transcribe(audio_data, show_all=show_all)
+
+
+if __name__ == '__main__':
+    from danspeech.pretrained_models import StreamingRNN
+    model = StreamingRNN()
+    r = Recognizer(model=model, with_gpu=True)
+    generator = r.listen_video()
+    iterating_transcript = ""
+    while True:
+        is_last, output = next(generator)
+        if not is_last and output:
+            iterating_transcript += output
+            print(iterating_transcript)
+        else:
+            print(output)
+            iterating_transcript = ""
+
+

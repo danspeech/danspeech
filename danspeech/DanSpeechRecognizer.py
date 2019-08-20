@@ -5,6 +5,7 @@ from danspeech.errors.recognizer_errors import ModelNotInitialized
 from danspeech.audio.parsers import SpectrogramAudioParser, InferenceSpectrogramAudioParser
 from danspeech.pretrained_models import DanSpeechPrimary
 from danspeech.language_models import DSL3gram
+import matplotlib.pyplot as plt
 
 class DanSpeechRecognizer(object):
 
@@ -47,17 +48,19 @@ class DanSpeechRecognizer(object):
         self.iterating_transcript = ""
 
         self.second_model = DanSpeechPrimary()
+        self.second_labels = self.second_model.labels
         self.audio_config = self.second_model.audio_conf
-        self.second_model =  self.second_model.to(self.device)
+        self.second_model = self.second_model.to(self.device)
         self.second_model.eval()
-
-        self.second_decoder = DSL3gram()
+        self.second_decoder_ = DSL3gram()
 
         # When updating model, always update decoder because of labels
-        self.second_decoder = decoder = BeamCTCDecoder(labels=self.second_model.labels, lm_path=self.second_decoder,
+        self.second_decoder = BeamCTCDecoder(labels=self.second_labels, lm_path=self.second_decoder_,
                                       alpha=self.alpha, beta=self.beta,
                                       beam_width=self.beam_width, num_processes=6, cutoff_prob=1.0,
-                                      cutoff_top_n=40, blank_index=self.labels.index('_'))
+                                      cutoff_top_n=40, blank_index=self.second_labels.index('_'))
+
+        self.spectrograms = []
 
     def update_model(self, model):
         self.audio_config = model.audio_conf
@@ -129,7 +132,7 @@ class DanSpeechRecognizer(object):
             # Convert recording to batch for model purpose
             recording = recording.view(1, 1, recording.size(0), recording.size(1))
 
-            recording.to(self.device)
+            recording = recording.to(self.device)
             out = self.model(recording, is_first, is_last)
 
             # First pass returns None, as we need more context for first prediction
@@ -138,7 +141,7 @@ class DanSpeechRecognizer(object):
 
             self.full_output.append(out)
             decoded_out, _ = self.greedy_decoder.decode(out)
-            transcript = decoded_out[0][0]
+            transcript = decoded_out[0][0]#
 
             # Collapsing characters hack
             if self.iterating_transcript and transcript and self.iterating_transcript[-1] == transcript[0]:
@@ -153,7 +156,7 @@ class DanSpeechRecognizer(object):
             #plt.imshow(final)
             #plt.colorbar()
             #plt.show()
-            #self.spectrograms = []
+            self.spectrograms = []
             if self.lm != "greedy":
                 final_out = torch.cat(self.full_output, dim=1)
                 decoded_out, _ = self.decoder.decode(final_out)
@@ -167,10 +170,13 @@ class DanSpeechRecognizer(object):
             else:
                 output = ""
                 if len(self.iterating_transcript) > 1:
-                    out, _ = self.second_model(final)
+                    final = final.view(1, 1, final.size(0), final.size(1))
+                    final = final.to(self.device)
+                    input_sizes = torch.IntTensor([final.size(3)]).int()
+                    out, _ = self.second_model(final, input_sizes)
                     decoded_out, _ = self.decoder.decode(out)
                     decoded_out = decoded_out[0][0]
-                    output = decoded_out
+                    output = str(decoded_out[0]).upper() + decoded_out[1:] + ".\n"
                     #output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
                 self.iterating_transcript = ""
                 return output
