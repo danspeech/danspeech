@@ -22,11 +22,11 @@ class Recognizer(object):
 
         """
         # minimum audio energy to consider for recording
-        self.energy_threshold = 300
+        self.energy_threshold = 1500
 
-        self.dynamic_energy_threshold = True
-        self.dynamic_energy_adjustment_damping = 0.15
-        self.dynamic_energy_ratio = 1.5
+        #self.dynamic_energy_threshold = True
+        #self.dynamic_energy_adjustment_damping = 0.15
+        #self.dynamic_energy_ratio = 1.5
 
         # seconds of non-speaking audio before a phrase is considered complete
         self.pause_threshold = 0.8
@@ -109,13 +109,13 @@ class Recognizer(object):
                 # detect whether speaking has started on audio input
                 energy = audioop.rms(buffer, source.sampling_width)  # energy of the audio signal
                 if energy > self.energy_threshold: break
-
+                """
                 # dynamically adjust the energy threshold using asymmetric weighted average
                 if self.dynamic_energy_threshold:
                     damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
                     target_energy = energy * self.dynamic_energy_ratio
                     self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
-
+                """
             # read audio input until the phrase ends
             pause_count, phrase_count = 0, 0
             phrase_start_time = elapsed_time
@@ -181,6 +181,7 @@ class Recognizer(object):
         elapsed_time = 0  # number of seconds of audio read
         is_first = True
         while True:
+
             frames = []
 
             # store audio input until the phrase starts
@@ -204,16 +205,21 @@ class Recognizer(object):
                 if energy > self.energy_threshold:
                     break
 
+                print("Energy1")
+                print(energy)
                 # dynamically adjust the energy threshold using asymmetric weighted average
+                """
                 if self.dynamic_energy_threshold:
                     damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
                     target_energy = energy * self.dynamic_energy_ratio
                     self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
+                """
 
             # read audio input until the phrase ends
             pause_count, phrase_count = 0, 0
             phrase_start_time = elapsed_time
             while True:
+
                 # handle phrase being too long by cutting off the audio
                 elapsed_time += seconds_per_buffer
                 if phrase_time_limit and elapsed_time - phrase_start_time > phrase_time_limit:
@@ -228,6 +234,8 @@ class Recognizer(object):
 
                 # check if speaking has stopped for longer than the pause threshold on the audio input
                 energy = audioop.rms(buffer, source.sampling_width)  # unit energy of the audio signal within the buffer
+                print("Energy2")
+                print(energy)
 
                 if energy > self.energy_threshold:
                     pause_count = 0
@@ -253,10 +261,9 @@ class Recognizer(object):
 
         if not frames:
             yield True, []
-
-        frame_data = b"".join(frames)
-
-        yield True, AudioData(frame_data, source.sampling_rate, source.sampling_width).get_array_data()
+        else:
+            frame_data = b"".join(frames)
+            yield True, AudioData(frame_data, source.sampling_rate, source.sampling_width).get_array_data()
 
     @staticmethod
     def get_audio_data(frames, source):
@@ -318,6 +325,10 @@ class Recognizer(object):
                     try:  # Listen until silence has been detected
                         while True:
                             is_last_, temp = next(generator)
+
+                            if not running[0]:
+                                break
+
                             data.append((is_last_, temp))
 
                             # If is last, we start new listen generator
@@ -325,6 +336,7 @@ class Recognizer(object):
                                 processed += 1
                                 processed_background[0] = processed
                                 break
+
 
                     except WaitTimeoutError:  # listening timed out, just try again
                         pass

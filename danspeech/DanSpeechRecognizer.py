@@ -174,7 +174,7 @@ class DanSpeechRecognizer(object):
                     final = final.to(self.device)
                     input_sizes = torch.IntTensor([final.size(3)]).int()
                     out, _ = self.second_model(final, input_sizes)
-                    decoded_out, _ = self.decoder.decode(out)
+                    decoded_out, _ = self.second_decoder.decode(out)
                     decoded_out = decoded_out[0][0]
                     output = str(decoded_out[0]).upper() + decoded_out[1:] + ".\n"
                     #output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
