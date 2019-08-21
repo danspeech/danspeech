@@ -490,15 +490,15 @@ class Recognizer(object):
         #print('start video')
         #p = subprocess.Popen(['mplayer', 'valg_moede.mp4'])
 
-        audio = load_audio(path="/home/arpelarpe/programming_projects/danish-speech-recognition/dummy_scripts/valg_moede.wav")[offset:]
+        audio = load_audio(path="/home/mcn/danspeech-old/valg_moede.wav")[offset:]
         # seconds of non-speaking audio before a phrase is considered complete
-        pause_threshold = 0.5
+        pause_threshold = 0.6
         pause_buffer_count = math.ceil(pause_threshold / (1024 / 16000))
         print(pause_buffer_count)
         print(general_required_frames)
         print(first_required_frames)
 
-        energy_threshold = 2000
+        energy_threshold = 1500
 
         # start 60 seconds in
         iterator = 0

@@ -12,7 +12,7 @@ def DanSpeechFolketinget(cache_dir=None):
     :return: Pretrained DeepSpeech model
     """
 
-    model_path = get_model(model_name="folketinget_finetuned_4.pth", origin=MODEL_PACKAGE, file_hash="452fb02528b7a97ee0ba4ad9ab2fd31d", cache_dir=cache_dir)
+    model_path = get_model(model_name="folketinget_finetuned_6.pth", origin=MODEL_PACKAGE, file_hash="a1beed5439a508b9d7a3aa980d4f89ed", cache_dir=cache_dir)
     package = torch.load(model_path, map_location=lambda storage, loc: storage)
 
     # ToDO: Fix the need of conv layers specificer... Should be deprecated when new models are trained

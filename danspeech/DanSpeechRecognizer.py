@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 class DanSpeechRecognizer(object):
 
     def __init__(self, model_name=None, lm_name=None,
-                 alpha=1.3, beta=0.2, with_gpu=False,
-                 beam_width=64):
+                 alpha=1.0471119809697471, beta=2.8309374387487924, with_gpu=False,
+                 beam_width=200):
 
         self.device = torch.device("cuda" if with_gpu else "cpu")
         print(self.device)
@@ -174,7 +174,7 @@ class DanSpeechRecognizer(object):
                     final = final.to(self.device)
                     input_sizes = torch.IntTensor([final.size(3)]).int()
                     out, _ = self.second_model(final, input_sizes)
-                    decoded_out, _ = self.decoder.decode(out)
+                    decoded_out, _ = self.second_decoder.decode(out)
                     decoded_out = decoded_out[0][0]
                     output = str(decoded_out[0]).upper() + decoded_out[1:] + ".\n"
                     #output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
