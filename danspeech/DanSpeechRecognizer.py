@@ -1,4 +1,5 @@
 import torch
+torch.backends.cudnn.deterministic = True
 
 from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized

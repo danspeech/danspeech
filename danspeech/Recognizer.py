@@ -469,7 +469,7 @@ class Recognizer(object):
         # First takes two samples pr 10ms, the rest needs 160 due to overlapping
         general_sample_requirement = samples_pr_10ms * 2 + (samples_pr_10ms * (required_spec_frames - 1))
 
-        offset = 12 * 60 * 16000
+        offset = 14 * 60 * 16000
 
         # First pass, we need more samples due to padding of initial conv layers
         first_samples_requirement = general_sample_requirement + (samples_pr_10ms * 15)
