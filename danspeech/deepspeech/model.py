@@ -658,6 +658,12 @@ class DeepSpeech(nn.Module):
 
     @staticmethod
     def get_param_size(model):
+        """
+        Get the number of parameters for a given model.
+
+        :param model: DeepSpeech model
+        :return: Number of params
+        """
         params = 0
         for p in model.parameters():
             tmp = 1
