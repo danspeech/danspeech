@@ -16,12 +16,12 @@ install [ctcdecode](https://github.com/parlance/ctcdecode).
 
 ```python
 import danspeech
-from danspeech.pretrained_models import Units400
+from danspeech.pretrained_models import TestModel
 from danspeech.language_models import DSL3gram
 from danspeech.audio.resources import load_audio
 
 # Load a DanSpeech model. If the model does not exists, it will be downloaded. 
-model = Units400()
+model = TestModel()
 recognizer = danspeech.Recognizer(model=model)
 
 # Load the audio file.
