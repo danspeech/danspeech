@@ -18,7 +18,7 @@ install [ctcdecode](https://github.com/parlance/ctcdecode).
 import danspeech
 from danspeech.pretrained_models import TestModel
 from danspeech.language_models import DSL3gram
-from danspeech.audio.resources import load_audio
+from danspeech.audio import load_audio
 
 # Load a DanSpeech model. If the model does not exists, it will be downloaded. 
 model = TestModel()
