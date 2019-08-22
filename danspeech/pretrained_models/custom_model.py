@@ -2,7 +2,7 @@
 from danspeech.deepspeech.model import DeepSpeech
 
 # ToDO: Create
-def Baseline(model_path):
+def CustomModel(model_path):
     """
     Instantiates the most complex DanSpeech model with a lot of parameters
 

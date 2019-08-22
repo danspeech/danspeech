@@ -348,7 +348,7 @@ class DeepSpeech(nn.Module):
             raise ConvError("Maximum amount of convolutional layers supported by DanSpeech is 3")
 
         if self.streaming_model:
-            self.streaming_init(conv_layers, rnn_hidden_size, rnn_type, rnn_hidden_layers, context)
+            self.streaming_init(conv_layers, rnn_hidden_size, rnn_type, rnn_layers, context)
         else:
             # Based on above convolutions and spectrogram size using conv formula (W - F + 2P)/ S+1
             rnn_input_size = int(math.floor((sample_rate * window_size) / 2) + 1)
@@ -399,7 +399,7 @@ class DeepSpeech(nn.Module):
             rnn = BatchRNN(input_size=rnn_input_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type,
                            bidirectional=bidirectional, batch_norm=False)
             rnns.append(('0', rnn))
-            for x in range(rnn_hidden_layers - 1):
+            for x in range(rnn_layers - 1):
                 rnn = BatchRNN(input_size=rnn_hidden_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type,
                                bidirectional=bidirectional)
                 rnns.append(('%d' % (x + 1), rnn))
@@ -579,7 +579,7 @@ class DeepSpeech(nn.Module):
         return model
 
     @classmethod
-    def load_model_package(cls, package, conv_layers=2):
+    def load_model_package(cls, package):
         """
         If you need aditional information from package, then use this loading method instead.
 
@@ -587,15 +587,20 @@ class DeepSpeech(nn.Module):
         :param conv_layers: conv_layers: Number of Conv layers. Will be removed after repackaging models.
         :return: DeepSpeech DanSpeech trained model
         """
-        # toDO: Remove when all models are repackaged
-        if "conv_layers" in package:
-            conv_layers = package["conv_layers"]
+        model = cls(model_name=package['model_name'],
+                    rnn_hidden_size=package['rnn_hidden_size'],
+                    rnn_layers=package['rnn_layers'],
+                    labels=package['labels'],
+                    audio_conf=package['audio_conf'],
+                    rnn_type=supported_rnns[package['rnn_type']],
+                    bidirectional=package['bidirectional'],
+                    conv_layers=package['conv_layers'],
+                    context=package['context'],
+                    streaming_inference_model=package["streaming_model"])
 
-        model = cls(model_name="dummy", rnn_hidden_size=package['hidden_size'], rnn_hidden_layers=package['hidden_layers'],
-                    labels=package['labels'], audio_conf=package['audio_conf'],
-                    rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
-                    conv_layers=conv_layers)
         model.load_state_dict(package['state_dict'])
+
+        # This is important to make sure that the weights are initialized correctly into the memory
         for x in model.rnns:
             x.flatten_parameters()
         return model
@@ -604,6 +609,12 @@ class DeepSpeech(nn.Module):
     def serialize(model, optimizer=None, epoch=None, iteration=None, loss_results=None,
                   cer_results_corr=None, wer_results_corr=None, cer_results_ncorr=None,
                   wer_results_ncorr=None, avg_loss=None, meta=None, distributed=False):
+        """
+
+        # TODO: Refactor but find out what we want to serialize.
+        # When is this method needed. Should it really lie in training repo? or ?
+
+        """
 
         if distributed:
             package = {
@@ -659,4 +670,8 @@ class DeepSpeech(nn.Module):
         return params
 
 if __name__ == '__main__':
-    model = DeepSpeech(conv_layers=1)
+    from danspeech.pretrained_models import CustomModel
+    path = "/Volumes/Karens harddisk/danspeech_final_models/TestModel.pth"
+    print(CustomModel(path))
+
+    #model = DeepSpeech(conv_layers=1)
