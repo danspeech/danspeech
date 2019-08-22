@@ -21,7 +21,7 @@ class Recognizer(object):
 
         """
         # minimum audio energy to consider for recording
-        self.energy_threshold = 300
+        self.energy_threshold = 1000
 
         self.dynamic_energy_threshold = True
         self.dynamic_energy_adjustment_damping = 0.15
@@ -56,22 +56,40 @@ class Recognizer(object):
         self.microphone = None
 
     def update_model(self, model):
+        """
+        Updates the model being used by the Recognizer.
+
+        :param model: DanSpeech model (see DanSpeech.pretrained_models)
+        :return: None
+        """
         self.danspeech_recognizer.update_model(model)
+        print("DanSpeech model updated") #ToDO: Include model name
 
     def update_decoder(self, lm=None, alpha=None, beta=None, beam_width=None):
+        """
+        Updates the decoder being used by the Recognizer.
+
+        If lm is None or "greedy", then the decoding will be performed by greedy decoding, and the alpha, beta and
+        beam width parameters are therefore ignored.
+
+        :param lm: DanSpeech Language model (see DanSpeech.language_models)
+        :param alpha: Alpha parameter of beam search decoding. If None, then the decoder will use existing parameter
+        in DanSpeechRecognizer.
+        :param beta: Beta parameter of beam search decoding. If None, then the decoder will use existing parameter
+        in DanSpeechRecognizer.
+        :param beam_width: Beam width of beam search decoding. If None, then the decoder will use existing parameter
+        in DanSpeechRecognizer.
+        :return: None
+        """
         self.danspeech_recognizer.update_decoder(lm=lm, alpha=alpha, beta=beta, beam_width=beam_width)
+        print("DanSpeech decoder updated ") #ToDO: Include model name
 
     def listen(self, source, timeout=None, phrase_time_limit=None):
         """
-        Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
+        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+        Modified for DanSpeech.
 
-        This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of non-speaking or there is no more audio input. The ending silence is not included.
-
-        The ``timeout`` parameter is the maximum number of seconds that this will wait for a phrase to start before giving up and throwing an ``speech_recognition.WaitTimeoutError`` exception. If ``timeout`` is ``None``, there will be no wait timeout.
-
-        The ``phrase_time_limit`` parameter is the maximum number of seconds that this will allow a phrase to continue before stopping and returning the part of the phrase processed before the time limit was reached. The resulting audio will be the phrase cut off at the time limit. If ``phrase_timeout`` is ``None``, there will be no phrase time limit.
-
-        This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising a ``speech_recognition.WaitTimeoutError`` exception.
+        Listens to a stream of audio.
         """
         assert isinstance(source, SpeechSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
@@ -152,17 +170,17 @@ class Recognizer(object):
 
     def listen_stream(self, source, frames_first, frames_rest, timeout=None, phrase_time_limit=None):
         """
-        Generator recording
+        Adapted from: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
 
-        Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
+        Generator used to listen to the audio from a source e.g. a microphone. This generator is used
+        by the streaming models.
 
-        This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of non-speaking or there is no more audio input. The ending silence is not included.
-
-        The ``timeout`` parameter is the maximum number of seconds that this will wait for a phrase to start before giving up and throwing an ``speech_recognition.WaitTimeoutError`` exception. If ``timeout`` is ``None``, there will be no wait timeout.
-
-        The ``phrase_time_limit`` parameter is the maximum number of seconds that this will allow a phrase to continue before stopping and returning the part of the phrase processed before the time limit was reached. The resulting audio will be the phrase cut off at the time limit. If ``phrase_timeout`` is ``None``, there will be no phrase time limit.
-
-        This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising a ``speech_recognition.WaitTimeoutError`` exception.
+        :param source: Source of audio. Needs to be a Danspeech.audio.resources.SpeechSource instance
+        :param frames_first: Required frames before yielding data for the first pass to the streaming model
+        :param frames_rest: Minimum required frames for passes after the first pass of the streaming model.
+        :param timeout: Maximum number of seconds that this will wait until a phrase starts
+        :param phrase_time_limit: Maxumum number of seconds to that will allow a phrase to continue before stopping
+        :return: Data and an indicator whether it is the last part of a streaming part
         """
         assert isinstance(source, SpeechSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
@@ -259,17 +277,25 @@ class Recognizer(object):
 
     @staticmethod
     def get_audio_data(frames, source):
+        """
+        Function to convert the frames (bytes) from a stream to an array used for DanSpeech models
+
+        :param frames: Byte frames
+        :param source: Source of stream/frames
+        :return: Numpy array with speech data
+        """
         # obtain frame data
         frame_data = b"".join(frames)
         return AudioData(frame_data, source.sampling_rate, source.sampling_width).get_array_data()
 
     def adjust_for_ambient_noise(self, source, duration=1):
         """
-        Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
+        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+        Modified for DanSpeech
 
-        Intended to calibrate the energy threshold with the ambient energy level. Should be used on periods of audio without speech - will stop early if any speech is detected.
-
-        The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
+        :param source: Source of audio. Needs to be a Danspeech.audio.resources.SpeechSource instance
+        :param duration: Maximum duration of adjusting the energy threshold
+        :return: None
         """
         assert isinstance(source, SpeechSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
@@ -281,7 +307,9 @@ class Recognizer(object):
         # adjust energy threshold until a phrase starts
         while True:
             elapsed_time += seconds_per_buffer
-            if elapsed_time > duration: break
+            if elapsed_time > duration:
+                break
+
             buffer = source.stream.read(source.chunk)
             energy = audioop.rms(buffer, source.sampling_width)  # energy of the audio signal
 
@@ -292,12 +320,14 @@ class Recognizer(object):
 
     def listen_in_background(self, source, first_required_frames, general_required_frames):
         """
-        Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
+        Spawns a thread which listens to the source of data
 
-        Returns a function object that, when called, requests that the background listener thread stop. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads. The function accepts one parameter, ``wait_for_stop``: if truthy, the function will wait for the background listener to stop before returning, otherwise it will return immediately and the background listener thread might still be running for a second or two afterwards. Additionally, if you are using a truthy value for ``wait_for_stop``, you must call the function from the same thread you originally called ``listen_in_background`` from.
+        :param source: Source of stream/frames
+        :param first_required_frames: Required frames before yielding data for the first pass to the streaming model
+        :param general_required_frames: Minimum required frames for passes after the first pass of the streaming model.
 
-        Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``. The ``phrase_time_limit`` parameter works in the same way as the ``phrase_time_limit`` parameter for ``recognizer_instance.listen(source)``, as well.
-
+        :return: Stopper function used to stop the thread, and a data_getter which returns data from the thread
+        according current steps.
         """
         assert isinstance(source, SpeechSource), "Source must be an audio source"
 
@@ -380,11 +410,28 @@ class Recognizer(object):
         return stopper, get_data
 
     def stop_microphone_streaming(self):
-        print("Stopping microphone stream...")
-        self.stream_thread_stopper(wait_for_stop=False)
-        self.stream = False
+        """
+        Used to stop microphone streaming.
+
+        :return: None
+        """
+        if self.stream:
+            print("Stopping microphone stream...")
+            self.stream_thread_stopper(wait_for_stop=False)
+            self.stream = False
+        else:
+            print("No stream is running for the Recognizer")
 
     def microphone_streaming(self, source):
+        """
+        Generator class to stream from the source of audio.
+
+        This class handles the correct amounts needed by the streamer model. If the current held by DanSpeechRecognizer
+        is not a streaming model, the function will init the streamingCPU model.
+
+        :param source: Source of audio
+        :return: Boolean to indicated if it is ending of an utterance and the transcribed output
+        """
         self.danspeech_recognizer.enable_streaming()
         lookahead_context = self.danspeech_recognizer.model.context
         required_spec_frames = (lookahead_context - 1) * 2
@@ -457,13 +504,12 @@ class Recognizer(object):
 
     def recognize(self, audio_data, show_all=False):
         """
-        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using a loceal DanSpeech model.
+        Performs speech recognition with the current initialized model.
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the
-        16 most likely beams from beam search with a language model
-
-        If ``use_lm`` is false, the most likely transcription will be returned ignoring the ``show_all`` parameter
-
+        :param audio_data: Numpy array of audio data
+        :param show_all: Whether to return all beams for beam search, if the beam search is enabled.
+        :return: Returns the most likely transcription if show_all is false (the default). Otherwise, returns the
+        most likely beams from beam search with a language model
         """
 
         return self.danspeech_recognizer.transcribe(audio_data, show_all=show_all)
