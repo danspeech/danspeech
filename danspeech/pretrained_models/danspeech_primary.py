@@ -10,7 +10,6 @@ def DanSpeechPrimary(cache_dir=None):
 
     :return: Pretrained DeepSpeech model
     """
-    model_path = get_model(model_name="danspeech_primary.pth", origin=MODEL_PACKAGE, file_hash="2dfa5b8bdee1970d20c6594014334436", cache_dir=cache_dir)
-    model = DeepSpeech.load_model(model_path, conv_layers=3)
-    # ToDO: Fix the need of conv layers specificer... Should be deprecated when new models are trained
+    model_path = get_model(model_name="DanSpeechPrimary.pth", origin=MODEL_PACKAGE, file_hash="d169900e0781047f0a19a6efbef353ee", cache_dir=cache_dir)
+    model = DeepSpeech.load_model(model_path)
     return model

@@ -671,7 +671,12 @@ class DeepSpeech(nn.Module):
 
 if __name__ == '__main__':
     from danspeech.pretrained_models import CustomModel
-    path = "/Volumes/Karens harddisk/danspeech_final_models/TestModel.pth"
-    print(CustomModel(path))
 
+    model_name = "Baseline.pth"
+
+    path = "/Volumes/Karens harddisk/danspeech_final_models/"
+    final_path =  path + model_name
+    model = CustomModel(final_path)
+    print(model)
+    print(model.model_name)
     #model = DeepSpeech(conv_layers=1)

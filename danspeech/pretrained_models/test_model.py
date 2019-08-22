@@ -9,7 +9,7 @@ def TestModel():
 
     :return: Pretrained DeepSpeech model
     """
-    model_path = get_model(model_name="400_units.pth", origin=MODEL_PACKAGE,
-                           file_hash="1bb9c5b6bb8259193b5ac7e2e0490cd7")
+    model_path = get_model(model_name="TestModel.pth", origin=MODEL_PACKAGE,
+                           file_hash="c21438a33f847a9c8d4e08779e98bf31")
     model = DeepSpeech.load_model(model_path)
     return model
