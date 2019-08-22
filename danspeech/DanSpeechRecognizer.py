@@ -3,7 +3,8 @@ import torch
 from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized
 from danspeech.audio.parsers import SpectrogramAudioParser, InferenceSpectrogramAudioParser
-
+from danspeech.pretrained_models import DanSpeechPrimary
+from danspeech.language_models import DSL3gram
 
 class DanSpeechRecognizer(object):
 
@@ -44,6 +45,19 @@ class DanSpeechRecognizer(object):
         self.streaming = False
         self.full_output = []
         self.iterating_transcript = ""
+
+        self.second_model = DanSpeechPrimary()
+        self.audio_config = self.second_model.audio_conf
+        self.second_model =  self.second_model.to(self.device)
+        self.second_model.eval()
+
+        self.second_decoder = DSL3gram()
+
+        # When updating model, always update decoder because of labels
+        self.second_decoder = decoder = BeamCTCDecoder(labels=self.second_model.labels, lm_path=self.second_decoder,
+                                      alpha=self.alpha, beta=self.beta,
+                                      beam_width=self.beam_width, num_processes=6, cutoff_prob=1.0,
+                                      cutoff_top_n=40, blank_index=self.labels.index('_'))
 
     def update_model(self, model):
         self.audio_config = model.audio_conf
@@ -103,7 +117,7 @@ class DanSpeechRecognizer(object):
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
         self.iterating_transcript = ""
         self.full_output = []
-        #self.spectrograms = []
+        self.spectrograms = []
 
     def streaming_transcribe(self, recording, is_last, is_first):
         recording = self.audio_parser.parse_audio(recording, is_last)
@@ -111,7 +125,7 @@ class DanSpeechRecognizer(object):
         transcript = ""
         if len(recording) != 0:
             # ToDO: Remove but keep here for now
-            #self.spectrograms.append(recording)
+            self.spectrograms.append(recording)
             # Convert recording to batch for model purpose
             recording = recording.view(1, 1, recording.size(0), recording.size(1))
 
@@ -135,7 +149,7 @@ class DanSpeechRecognizer(object):
 
         if is_last:
             # ToDO: Remove but keep here for now
-            #final = torch.cat(self.spectrograms, dim=1)
+            final = torch.cat(self.spectrograms, dim=1)
             #plt.imshow(final)
             #plt.colorbar()
             #plt.show()
@@ -153,7 +167,11 @@ class DanSpeechRecognizer(object):
             else:
                 output = ""
                 if len(self.iterating_transcript) > 1:
-                    output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
+                    out, _ = self.second_model(final)
+                    decoded_out, _ = self.decoder.decode(out)
+                    decoded_out = decoded_out[0][0]
+                    output = decoded_out
+                    #output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
                 self.iterating_transcript = ""
                 return output
 
