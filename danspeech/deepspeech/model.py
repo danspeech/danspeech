@@ -555,7 +555,6 @@ class DeepSpeech(nn.Module):
         If you do not need meta data from package, simply use this method to load the model.
 
         :param path: Path to .pth package for the model.
-        :param conv_layers: Number of Conv layers. Will be removed after repackaging models.
         :return: DeepSpeech DanSpeech trained model
         """
         package = torch.load(path, map_location=lambda storage, loc: storage)
@@ -583,7 +582,6 @@ class DeepSpeech(nn.Module):
         If you need aditional information from package, then use this loading method instead.
 
         :param package: Package holding the model,
-        :param conv_layers: conv_layers: Number of Conv layers. Will be removed after repackaging models.
         :return: DeepSpeech DanSpeech trained model
         """
         model = cls(model_name=package['model_name'],
