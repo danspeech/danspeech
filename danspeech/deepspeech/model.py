@@ -671,10 +671,3 @@ class DeepSpeech(nn.Module):
                 tmp *= x
             params += tmp
         return params
-
-if __name__ == '__main__':
-    from danspeech.pretrained_models import CPUStreamingRNN
-    model = CPUStreamingRNN()
-    print(model)
-    print(model.model_name)
-    #model = DeepSpeech(conv_layers=1)
