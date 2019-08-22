@@ -35,20 +35,25 @@ class AudioParser(ABC):
 
 
 class SpectrogramAudioParser(AudioParser):
+    """
+    Class for Spectrogram parsing
 
-    def __init__(self, audio_config=None, data_augmenter=None):
+    """
+
+    def __init__(self, audio_config=None):
         # inits all audio configs
         super(SpectrogramAudioParser, self).__init__(audio_config)
 
         self.n_fft = int(self.sampling_rate * self.window_size)
         self.hop_length = int(self.sampling_rate * self.window_stride)
 
-        self.data_augmenter = data_augmenter
-
     def parse_audio(self, recording):
+        """
+        Parses the given recording to a spectrogram for DanSpeech models.
 
-        if self.data_augmenter:
-            recording = self.data_augmenter.augment(recording)
+        :param recording: Audio/Speech data in numpy array format.
+        :return: Spectrogram
+        """
 
         # STFT
         D = librosa.stft(recording, n_fft=self.n_fft, hop_length=self.hop_length,
@@ -68,7 +73,11 @@ class SpectrogramAudioParser(AudioParser):
 
 
 class InferenceSpectrogramAudioParser(AudioParser):
+    """
+    Class for Adaptive Spectrogram parsing.
 
+    Used if the audio should be transcribed in a stream.
+    """
     def __init__(self, audio_config=None, context=20):
         # inits all audio configs
         super(InferenceSpectrogramAudioParser, self).__init__(audio_config)
@@ -76,6 +85,8 @@ class InferenceSpectrogramAudioParser(AudioParser):
         self.n_fft = int(self.sampling_rate * self.window_size)
         self.hop_length = int(self.sampling_rate * self.window_stride)
         self.context = context
+
+        # These are estimated from the NST dataset.
         self.dataset_mean = 5.492418704733003
         self.dataset_std = 1.7552755216970917
         self.input_mean = 0
@@ -86,6 +97,13 @@ class InferenceSpectrogramAudioParser(AudioParser):
         self.nr_frames = context * 2 + 5
 
     def parse_audio(self, part_of_recording, is_last=False):
+        """
+        Parses the given recording to a spectrogram for DanSpeech models.
+
+        :param part_of_recording: Audio/Speech data in numpy array format.
+        :param is_last: Indicating whether the part_of_recording is the last part of a recording
+        :return: Adaoted Spectrogram
+        """
 
         # Ignore last and
         if is_last and len(part_of_recording) < 320:
