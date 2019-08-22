@@ -12,6 +12,6 @@ def TransferLearned():
     :return: Pretrained DeepSpeech model
     """
     model_path = get_model(model_name="TransferLearned.pth", origin=MODEL_PACKAGE,
-                           file_hash="3adcc8a010d528481ce7c8abb6176673")
+                           file_hash="d19b9d7dc976bffbc9225e0f80ecacbf")
     model = DeepSpeech.load_model(model_path)
     return model

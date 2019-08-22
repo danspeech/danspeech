@@ -6,7 +6,6 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
 
 from danspeech.errors.model_errors import ConvError
 from danspeech.deepspeech.utils import get_default_audio_config
@@ -670,13 +669,8 @@ class DeepSpeech(nn.Module):
         return params
 
 if __name__ == '__main__':
-    from danspeech.pretrained_models import CustomModel
-
-    model_name = "Baseline.pth"
-
-    path = "/Volumes/Karens harddisk/danspeech_final_models/"
-    final_path =  path + model_name
-    model = CustomModel(final_path)
+    from danspeech.pretrained_models import CPUStreamingRNN
+    model = CPUStreamingRNN()
     print(model)
     print(model.model_name)
     #model = DeepSpeech(conv_layers=1)

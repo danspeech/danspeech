@@ -10,7 +10,7 @@ def Baseline(cache_dir=None):
 
     :return: Pretrained DeepSpeech model
     """
-    model_path = get_model(model_name="Baseline.pth", origin=MODEL_PACKAGE, file_hash="81f03fa8b922445494a56bcd774c69a7", cache_dir=cache_dir)
+    model_path = get_model(model_name="Baseline.pth", origin=MODEL_PACKAGE, file_hash="e2c0c16d518fc57cd61c86cbb0170660", cache_dir=cache_dir)
     model = DeepSpeech.load_model(model_path)
     return model
 

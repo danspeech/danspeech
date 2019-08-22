@@ -12,6 +12,6 @@ def GPUStreamingRNN(cache_dir=None):
 
     :return: Pretrained DeepSpeech model
     """
-    model_path = get_model(model_name="GPUStreamingRNN.pth", origin=MODEL_PACKAGE, file_hash="065ff4f4699c96ec7fd613a193bbcc17", cache_dir=cache_dir)
+    model_path = get_model(model_name="GPUStreamingRNN.pth", origin=MODEL_PACKAGE, file_hash="8194f47f5c63c14c3587d42aa37d622d", cache_dir=cache_dir)
     model = DeepSpeech.load_model(model_path)
     return model

@@ -10,6 +10,6 @@ def DanSpeechPrimary(cache_dir=None):
 
     :return: Pretrained DeepSpeech model
     """
-    model_path = get_model(model_name="DanSpeechPrimary.pth", origin=MODEL_PACKAGE, file_hash="d169900e0781047f0a19a6efbef353ee", cache_dir=cache_dir)
+    model_path = get_model(model_name="DanSpeechPrimary.pth", origin=MODEL_PACKAGE, file_hash="5bd08282d442e990c37481d5c61cf93c", cache_dir=cache_dir)
     model = DeepSpeech.load_model(model_path)
     return model
