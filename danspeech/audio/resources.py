@@ -79,7 +79,10 @@ def load_audio(path, duration=None, offset=None):
 
 
 def shutil_which(pgm):
-    """Python 2 compatibility: backport of ``shutil.which()`` from Python 3"""
+    """
+    Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+    Python 2 compatibility: backport of ``shutil.which()`` from Python 3
+    """
     path = os.getenv('PATH')
     for p in path.split(os.path.pathsep):
         p = os.path.join(p, pgm)
@@ -88,7 +91,11 @@ def shutil_which(pgm):
 
 
 def get_flac_converter():
-    """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
+    """
+    Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+
+    :return: the absolute path of a FLAC converter executable, or raises an OSError if none can be found.
+    """
     # check for installed version first
     flac_converter = shutil_which("flac")
     if flac_converter is None:
@@ -108,7 +115,8 @@ def get_flac_converter():
         else:
             # no FLAC converter available
             raise OSError(
-                "FLAC conversion utility not available - consider installing the FLAC command line application by running `apt-get install flac` or your operating system's equivalent")
+                "FLAC conversion utility not available - consider installing the FLAC command line application by "
+                "running `apt-get install flac` or your operating system's equivalent")
 
     # mark FLAC converter as executable if possible
     try:
@@ -128,7 +136,16 @@ def get_flac_converter():
 
 
 def _wav2array(nchannels, sampwidth, data):
-    """data must be the string containing the bytes from the wav file."""
+    """
+    Source: https://github.com/WarrenWeckesser/wavio
+
+    Converts bytestring to array.
+
+    :param nchannels: Number of channels in wav
+    :param sampwidth: Sample width
+    :param data: data must be the string containing the bytes from the wav file.
+    :return: Numpy array containing the speech data
+    """
     num_samples, remainder = divmod(len(data), sampwidth * nchannels)
     if remainder > 0:
         raise ValueError('The length of data is not a multiple of '
@@ -158,7 +175,14 @@ class SpeechSource(ABC):
 
 
 class SpeechFile(SpeechSource):
+    """
+    Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+    Modified for DanSpeech
 
+    This is a checker of the speech file which also streams the input.
+
+    This class is wrapped in danspeech.audio.resources.load_audio and should hence not be directly called.
+    """
     def __init__(self, filepath):
         self.filepath = filepath
         self.sampling_rate = 16000
@@ -171,19 +195,12 @@ class SpeechFile(SpeechSource):
         self.sampling_width = None
 
     def __enter__(self):
-        """
-        Copyright (c) 2014-2017, Anthony Zhang <azhang9@gmail.com>
 
-        All rights reserved.
-        https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
-
-        Modifications:
-            - DanSpeech
-        """
         try:
             # attempt to read the file as WAV
             self.audio_reader = wave.open(self.filepath, "rb")
-            # RIFF WAV is a little-endian format (most ``audioop`` operations assume that the frames are stored in little-endian form)
+            # RIFF WAV is a little-endian format (most ``audioop`` operations assume that the
+            # frames are stored in little-endian form)
             self.little_endian = True
         except (wave.Error, EOFError):
             try:
@@ -224,7 +241,8 @@ class SpeechFile(SpeechSource):
                     self.audio_reader = aifc.open(aiff_file, "rb")
                 except (aifc.Error, EOFError):
                     raise ValueError(
-                        "Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format")
+                        "Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; "
+                        "check if file is corrupted or in another format")
                 self.little_endian = False  # AIFF is a big-endian format
 
         assert 1 <= self.audio_reader.getnchannels() <= 2, "Audio must be mono or stereo"
@@ -284,7 +302,10 @@ class SpeechFile(SpeechSource):
 
 def get_pyaudio():
     """
-    Imports the pyaudio module and checks its version. Throws exceptions if pyaudio can't be found or a wrong version is installed
+    Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+
+    Imports the pyaudio module and checks its version. Throws exceptions if pyaudio can't be found or a
+    wrong version is installed
     """
     try:
         import pyaudio
@@ -298,19 +319,20 @@ def get_pyaudio():
 
 class Microphone(SpeechSource):
     """
-    Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
+    Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
 
-    This will throw an ``AttributeError`` if you don't have PyAudio 0.2.11 or later installed.
+    Modified for DanSpeech
 
-    If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
+    Creates a Microphone instance, which represents the a microphone on the computer.
 
-    A device index is an integer between 0 and ``pyaudio.get_device_count() - 1`` (assume we have used ``import pyaudio`` beforehand) inclusive. It represents an audio device such as a microphone or speaker. See the `PyAudio documentation <http://people.csail.mit.edu/hubert/pyaudio/docs/>`__ for more details.
+    Requires PyAudio!
 
-    The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz). If not specified, the value of ``sample_rate`` is determined automatically from the system's microphone settings.
+    The microphone needs a device index, or else it will try to use the default microphone of the system.
 
-    Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some CPUs, such as those in older Raspberry Pi models, can't keep up if this value is too high.
+    Sampling rate should always be 16000, if the microphone should work with DanSpeech models.
 
-    Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
+    Avoid changing chunk size unless it is strictly neccessary. WARNING: Will possibly break microphone
+    streaming with DanSpeech models.
     """
 
     def __init__(self, device_index=None, sampling_rate=None, chunk_size=1024):
@@ -319,38 +341,48 @@ class Microphone(SpeechSource):
                 isinstance(sampling_rate, int) and sampling_rate > 0), "Sample rate must be None or a positive integer"
         assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
 
-        # set up PyAudio
-        self.pyaudio_module = get_pyaudio()
-        audio = self.pyaudio_module.PyAudio()
         try:
-            count = audio.get_device_count()  # obtain device count
-            if device_index is not None:  # ensure device index is in range
-                assert 0 <= device_index < count, "Device index out of range ({} devices available; device index should be between 0 and {} inclusive)".format(
-                    count, count - 1)
-            if sampling_rate is None:  # automatically set the sample rate to the hardware's default sample rate if not specified
-                device_info = audio.get_device_info_by_index(
-                    device_index) if device_index is not None else audio.get_default_input_device_info()
-                assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info[
-                    "defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
-                sampling_rate = int(device_info["defaultSampleRate"])
-        finally:
-            audio.terminate()
+            # set up PyAudio
+            self.pyaudio_module = get_pyaudio()
+            audio = self.pyaudio_module.PyAudio()
+            try:
+                count = audio.get_device_count()  # obtain device count
+                if device_index is not None:  # ensure device index is in range
+                    assert 0 <= device_index < count, "Device index out of range ({} devices available; " \
+                                                      "device index should be between 0 and {} inclusive)".format(
+                        count, count - 1)
 
-        self.device_index = device_index
-        self.format = self.pyaudio_module.paInt16  # 16-bit int sampling
-        self.sampling_width = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
-        self.sampling_rate = sampling_rate  # sampling rate in Hertz
-        self.chunk = chunk_size  # number of frames stored in each buffer
+                # automatically set the sample rate to the hardware's default sample rate if not specified
+                if sampling_rate is None:
+                    device_info = audio.get_device_info_by_index(
+                        device_index) if device_index is not None else audio.get_default_input_device_info()
+                    assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info[
+                        "defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
+                    sampling_rate = int(device_info["defaultSampleRate"])
+            finally:
+                audio.terminate()
 
-        self.audio = None
-        self.stream = None
+            self.device_index = device_index
+            self.format = self.pyaudio_module.paInt16  # 16-bit int sampling
+            self.sampling_width = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
+            self.sampling_rate = sampling_rate  # sampling rate in Hertz
+            self.chunk = chunk_size  # number of frames stored in each buffer
+
+            self.audio = None
+            self.stream = None
+
+        except AttributeError as e:
+            warnings.warn("PyAudio not installed. You will not be able to use microphone", e)
 
     @staticmethod
     def list_microphone_names():
         """
-        Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
+        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
 
-        The index of each microphone's name in the returned list is the same as its device index when creating a ``Microphone`` instance - if you want to use the microphone at index 3 in the returned list, use ``Microphone(device_index=3)``.
+        Returns a list of the names of all available microphones.
+        The index of each microphone's name in the returned list is the same as its device index when creating
+        a Microphone instance - if you want to use the microphone at index 3
+        in the returned list, use Microphone(device_index=3).
         """
         audio = get_pyaudio().PyAudio()
         try:
@@ -365,9 +397,13 @@ class Microphone(SpeechSource):
     @staticmethod
     def list_working_microphones():
         """
-        Returns a dictionary mapping device indices to microphone names, for microphones that are currently hearing sounds. When using this function, ensure that your microphone is unmuted and make some noise at it to ensure it will be detected as working.
+        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
 
-        Each key in the returned dictionary can be passed to the ``Microphone`` constructor to use that microphone. For example, if the return value is ``{3: "HDA Intel PCH: ALC3232 Analog (hw:1,0)"}``, you can do ``Microphone(device_index=3)`` to use that microphone.
+        Returns a dictionary mapping device indices to microphone names, for microphones that are currently
+        hearing sounds.
+
+        When using this function, ensure that your microphone is unmuted
+        and make some noise at it to ensure it will be detected as working.
         """
         pyaudio_module = Microphone.get_pyaudio()
         audio = pyaudio_module.PyAudio()
@@ -426,6 +462,10 @@ class Microphone(SpeechSource):
             self.audio.terminate()
 
     class MicrophoneStream(object):
+        """
+        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+
+        """
         def __init__(self, pyaudio_stream):
             self.pyaudio_stream = pyaudio_stream
 
@@ -443,15 +483,16 @@ class Microphone(SpeechSource):
 
 class AudioData(object):
     """
-    Creates a new ``AudioData`` instance, which represents mono audio data.
+    Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+    Modified for DanSpeech
 
-    The raw audio data is specified by ``frame_data``, which is a sequence of bytes representing audio samples. This is the frame data structure used by the PCM WAV format.
+    AudioData represents mono data as a bytestring.
 
-    The width of each sample, in bytes, is specified by ``sample_width``. Each group of ``sample_width`` bytes represents a single audio sample.
+    To get array data for DanSpeech models, use get_array_data.
 
-    The audio data is assumed to have a sample rate of ``sample_rate`` samples per second (Hertz).
+    If you need to write the file to a .wav file, use get_wav_data
 
-    Usually, instances of this class are obtained from ``recognizer_instance.record`` or ``recognizer_instance.listen``, or in the callback for ``recognizer_instance.listen_in_background``, rather than instantiating them directly.
+    WARNING: Using sample rate other than 16000 will not work with DanSpeech models.
     """
 
     def __init__(self, frame_data, sample_rate, sample_width):
@@ -463,13 +504,21 @@ class AudioData(object):
 
     def get_segment(self, start_ms=None, end_ms=None):
         """
-        Returns a new ``AudioData`` instance, trimmed to a given time interval. In other words, an ``AudioData`` instance with the same audio data except starting at ``start_ms`` milliseconds in and ending ``end_ms`` milliseconds in.
+        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+        Modified for DanSpeech
 
-        If not specified, ``start_ms`` defaults to the beginning of the audio, and ``end_ms`` defaults to the end.
+        Used if you need a specific segment of the audio data.
+
+        :param start_ms: Start of trimmed audio
+        :param end_ms: End of Trimmed audio
+        :return: Returns a new AudioData instance, trimmed to a given time interval.
         """
-        assert start_ms is None or start_ms >= 0, "``start_ms`` must be a non-negative number"
-        assert end_ms is None or end_ms >= (
-            0 if start_ms is None else start_ms), " ``end_ms`` must be a non-negative number greater or equal to ``start_ms``"
+
+        #  "``start_ms`` must be a non-negative number"
+        assert start_ms is None or start_ms >= 0
+
+        # ``end_ms`` must be a non-negative number greater or equal to ``start_ms``"
+        assert end_ms is None or end_ms >= (0 if start_ms is None else start_ms)
         if start_ms is None:
             start_byte = 0
         else:
@@ -482,21 +531,25 @@ class AudioData(object):
 
     def get_raw_data(self, convert_rate=None, convert_width=None):
         """
-        Returns a byte string representing the raw frame data for the audio represented by the ``AudioData`` instance.
+        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
 
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
+        Writing these bytes directly to a file results in a valid
+        `RAW/PCM audio file <https://en.wikipedia.org/wiki/Raw_audio_format>`__.
 
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
 
-        Writing these bytes directly to a file results in a valid `RAW/PCM audio file <https://en.wikipedia.org/wiki/Raw_audio_format>`__.
+        :param convert_rate: Specify to convert the data into a new sample_rate
+        :param convert_width: Specify to convert data into a new width
+        :return: A byte string representing the raw frame data for the audio
+        represented by the AudioData instance.
         """
         assert convert_rate is None or convert_rate > 0, "Sample rate to convert to must be a positive integer"
-        assert convert_width is None or (
-                convert_width % 1 == 0 and 1 <= convert_width <= 4), "Sample width to convert to must be between 1 and 4 inclusive"
+        assert convert_width is None or (convert_width % 1 == 0 and 1 <= convert_width <= 4), \
+            "Sample width to convert to must be between 1 and 4 inclusive"
 
         raw_data = self.frame_data
 
-        # make sure unsigned 8-bit audio (which uses unsigned samples) is handled like higher sample width audio (which uses signed samples)
+        # make sure unsigned 8-bit audio (which uses unsigned samples) is handled
+        # like higher sample width audio (which uses signed samples)
         if self.sample_width == 1:
             raw_data = audioop.bias(raw_data, 1,
                                     -128)  # subtract 128 from every sample to make them act like signed samples
@@ -507,21 +560,27 @@ class AudioData(object):
 
         # convert samples to desired sample width if specified
         if convert_width is not None and self.sample_width != convert_width:
-            if convert_width == 3:  # we're converting the audio into 24-bit (workaround for https://bugs.python.org/issue12866)
+            # we're converting the audio into 24-bit (workaround for https://bugs.python.org/issue12866)
+            if convert_width == 3:
                 raw_data = audioop.lin2lin(raw_data, self.sample_width,
                                            4)  # convert audio into 32-bit first, which is always supported
                 try:
-                    audioop.bias(b"", 3,
-                                 0)  # test whether 24-bit audio is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
-                except audioop.error:  # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
-                    raw_data = b"".join(raw_data[i + 1:i + 4] for i in range(0, len(raw_data),
-                                                                             4))  # since we're in little endian, we discard the first byte from each 32-bit sample to get a 24-bit sample
+                    # test whether 24-bit audio is supported (for example, ``audioop`` in Python 3.3
+                    # and below don't support sample width 3, while Python 3.4+ do)
+                    audioop.bias(b"", 3, 0)
+
+                # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
+                except audioop.error:
+                    # since we're in little endian, we discard the first byte from each 32-bit sample
+                    # to get a 24-bit sample
+                    raw_data = b"".join(raw_data[i + 1:i + 4] for i in range(0, len(raw_data), 4))
                 else:  # 24-bit audio fully supported, we don't need to shim anything
                     raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
             else:
                 raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
 
-        # if the output is 8-bit audio with unsigned samples, convert the samples we've been treating as signed to unsigned again
+        # if the output is 8-bit audio with unsigned samples, convert the samples
+        # we've been treating as signed to unsigned again
         if convert_width == 1:
             raw_data = audioop.bias(raw_data, 1,
                                     128)  # add 128 to every sample to make them act like unsigned samples again
@@ -530,14 +589,16 @@ class AudioData(object):
 
     def get_wav_data(self, convert_rate=None, convert_width=None):
         """
-        Returns a byte string representing the contents of a WAV file containing the audio represented by the ``AudioData`` instance.
-
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
-
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
+        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
 
         Writing these bytes directly to a file results in a valid `WAV file <https://en.wikipedia.org/wiki/WAV>`__.
+
+        :param convert_rate: Specify to convert the data into a new sample_rate
+        :param convert_width: Specify to convert data into a new width
+        :return: A byte string representing the contents of a WAV file containing
+        the audio represented by the AudioData instance.
         """
+
         raw_data = self.get_raw_data(convert_rate, convert_width)
         sample_rate = self.sample_rate if convert_rate is None else convert_rate
         sample_width = self.sample_width if convert_width is None else convert_width
@@ -556,20 +617,13 @@ class AudioData(object):
         return wav_data
 
     def get_array_data(self, convert_rate=None, convert_width=None):
+        """
+        Get data as numpy array from an AudioData instance.
+
+        :param convert_rate: Specify to convert the data into a new sample_rate
+        :param convert_width: Specify to convert data into a new width
+        :return:
+        """
         raw_data = self.get_raw_data(convert_rate, convert_width)
         sample_width = self.sample_width if convert_width is None else convert_width
         return _wav2array(1, sample_width, raw_data).squeeze().astype(float)
-
-
-"""
-Local dev tests
-Should be removed
-"""
-if __name__ == '__main__':
-    # file_path = "../example_files/u0013002.wav"
-    # with SpeechFile(filepath=file_path, sampling_rate=16000) as source:
-    #    pass
-
-    m = Microphone(sampling_rate=16000)
-    print(Microphone.list_microphone_names())
-    # print(m.list_microphone_names())

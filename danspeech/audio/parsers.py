@@ -35,6 +35,10 @@ class AudioParser(ABC):
 
 
 class SpectrogramAudioParser(AudioParser):
+    """
+    Class for Spectrogram parsing
+
+    """
 
     def __init__(self, audio_config=None, data_augmenter=None):
         # inits all audio configs
@@ -46,6 +50,12 @@ class SpectrogramAudioParser(AudioParser):
         self.data_augmenter = data_augmenter
 
     def parse_audio(self, recording):
+        """
+        Parses the given recording to a spectrogram for DanSpeech models.
+
+        :param recording: Audio/Speech data in numpy array format.
+        :return: Spectrogram
+        """
 
         if self.data_augmenter:
             recording = self.data_augmenter.augment(recording)
@@ -68,7 +78,11 @@ class SpectrogramAudioParser(AudioParser):
 
 
 class InferenceSpectrogramAudioParser(AudioParser):
+    """
+    Adaptive Spectrogram creator.
 
+    Used if the audio should be transcribed in a stream.
+    """
     def __init__(self, audio_config=None, context=20):
         # inits all audio configs
         super(InferenceSpectrogramAudioParser, self).__init__(audio_config)
@@ -86,6 +100,13 @@ class InferenceSpectrogramAudioParser(AudioParser):
         self.nr_frames = context * 2 + 5
 
     def parse_audio(self, part_of_recording, is_last=False):
+        """
+        Parses the given recording to a spectrogram for DanSpeech models.
+
+        :param part_of_recording: Audio/Speech data in numpy array format.
+        :param is_last: Indicating whether the part_of_recording is the last part of a recording
+        :return: Adaoted Spectrogram
+        """
 
         # Ignore last and
         if is_last and len(part_of_recording) < 320:
