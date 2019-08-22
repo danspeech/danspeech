@@ -74,7 +74,7 @@ class SpectrogramAudioParser(AudioParser):
 
 class InferenceSpectrogramAudioParser(AudioParser):
     """
-    Adaptive Spectrogram creator.
+    Class for Adaptive Spectrogram parsing.
 
     Used if the audio should be transcribed in a stream.
     """
