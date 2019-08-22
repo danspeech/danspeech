@@ -291,7 +291,7 @@ class DeepSpeech(nn.Module):
     Modified for DanSpeech
     """
 
-    def __init__(self, model_name, rnn_type=nn.GRU, labels=None, rnn_hidden_size=768, rnn_hidden_layers=5, audio_conf=None,
+    def __init__(self, model_name, rnn_type=nn.GRU, labels=None, rnn_hidden_size=768, rnn_layers=5, audio_conf=None,
                  bidirectional=True, context=20, conv_layers=2, streaming_inference_model=False):
 
         """
@@ -328,8 +328,8 @@ class DeepSpeech(nn.Module):
 
         # model metadata needed for serialization/deserialization
         self.model_name = model_name
-        self.hidden_size = rnn_hidden_size
-        self.hidden_layers = rnn_hidden_layers
+        self.rnn_hidden_size = rnn_hidden_size
+        self.rnn_layers = rnn_layers
         self.rnn_type = rnn_type
         self.audio_conf = audio_conf or {}
         self.labels = labels
@@ -551,7 +551,7 @@ class DeepSpeech(nn.Module):
         return seq_len.int()
 
     @classmethod
-    def load_model(cls, path, conv_layers=2):
+    def load_model(cls, path):
         """
         If you do not need meta data from package, simply use this method to load the model.
 
@@ -560,15 +560,17 @@ class DeepSpeech(nn.Module):
         :return: DeepSpeech DanSpeech trained model
         """
         package = torch.load(path, map_location=lambda storage, loc: storage)
+        model = cls(model_name=package['model_name'],
+                    rnn_hidden_size=package['rnn_hidden_size'],
+                    rnn_layers=package['rnn_layers'],
+                    labels=package['labels'],
+                    audio_conf=package['audio_conf'],
+                    rnn_type=supported_rnns[package['rnn_type']],
+                    bidirectional=package['bidirectional'],
+                    conv_layers=package['conv_layers'],
+                    context=package['context'],
+                    streaming_inference_model=package["streaming_model"])
 
-        # toDO: Remove when all models are repackaged
-        if "conv_layers" in package:
-            conv_layers = package["conv_layers"]
-
-        model = cls(model_name="dummy", rnn_hidden_size=package['hidden_size'], rnn_hidden_layers=package['hidden_layers'],
-                    labels=package['labels'], audio_conf=package['audio_conf'],
-                    rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
-                    conv_layers=conv_layers)
         model.load_state_dict(package['state_dict'])
 
         # This is important to make sure that the weights are initialized correctly into the memory
