@@ -288,7 +288,7 @@ class LookaheadStream(nn.Module):
 class DeepSpeech(nn.Module):
     """
     Source: https://github.com/SeanNaren/deepspeech.pytorch/blob/master/model.py
-    Modified heavily for DanSpeech
+    Modified for DanSpeech
     """
 
     def __init__(self, model_name, rnn_type=nn.GRU, labels=None, rnn_hidden_size=768, rnn_hidden_layers=5, audio_conf=None,
