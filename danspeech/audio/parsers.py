@@ -90,6 +90,8 @@ class InferenceSpectrogramAudioParser(AudioParser):
         self.n_fft = int(self.sampling_rate * self.window_size)
         self.hop_length = int(self.sampling_rate * self.window_stride)
         self.context = context
+
+        # These are estimated from the NST dataset.
         self.dataset_mean = 5.492418704733003
         self.dataset_std = 1.7552755216970917
         self.input_mean = 0
