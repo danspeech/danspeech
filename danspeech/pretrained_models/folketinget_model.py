@@ -1,16 +1,23 @@
 from danspeech.deepspeech.model import DeepSpeech
 from danspeech.utils.data_utils import get_model
 
-MODEL_PACKAGE = 'https://github.com/Rasmusafj/models_development/raw/master/400units.pth'
 
-# ToDO: Create
-def Folketinget():
+# ToDo: Add model package link for release
+MODEL_PACKAGE = 'toDO'
+
+
+def Folketinget(cache_dir=None):
     """
-    Instantiates model with 2 conv layers and 5 rnn layers each with 400 units
+    The deepest and best performing DanSpeech model adapted to data from Folketinget.
 
-    :return: Pretrained DeepSpeech model
+    3 Conv layers
+    9 RNN Layers with 1200 hidden units
+
+    WARNING: This model is really slow, so we suggest you use it GPU.
+
+    :return: Pretrained DeepSpeech (Folketinget tuned) model
     """
     model_path = get_model(model_name="Folketinget.pth", origin=MODEL_PACKAGE,
-                           file_hash="9523d5744ad4ff5ffc8519393350cc91")
+                           file_hash="9523d5744ad4ff5ffc8519393350cc91", cache_dir=cache_dir)
     model = DeepSpeech.load_model(model_path)
     return model

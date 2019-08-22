@@ -1,17 +1,23 @@
 from danspeech.deepspeech.model import DeepSpeech
 from danspeech.utils.data_utils import get_model
 
-# ToDO: Repackage and include model
 
-MODEL_PACKAGE = 'https://github.com/Rasmusafj/models_development/raw/master/400units.pth'
+# ToDo: Add model package link for release
+MODEL_PACKAGE = 'ToDO'
 
-def TransferLearned():
+
+def TransferLearned(cache_dir=None):
     """
-    Instantiates model with 2 conv layers and 5 rnn layers each with 400 units
+    The Librispeech English model adapted to Danish while keeping the conv layers and the lowest/first RNN layer frozen
 
-    :return: Pretrained DeepSpeech model
+    This model performs better than the DanSpeechPrimary model on noisy data.
+
+    2 Conv layers
+    5 RNN Layers with 800 hidden units
+
+    :return: Pretrained DeepSpeech (Transfer learned from English) model
     """
     model_path = get_model(model_name="TransferLearned.pth", origin=MODEL_PACKAGE,
-                           file_hash="d19b9d7dc976bffbc9225e0f80ecacbf")
+                           file_hash="d19b9d7dc976bffbc9225e0f80ecacbf", cache_dir=cache_dir)
     model = DeepSpeech.load_model(model_path)
     return model

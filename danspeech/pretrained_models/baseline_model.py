@@ -1,16 +1,22 @@
 from danspeech.deepspeech.model import DeepSpeech
 from danspeech.utils.data_utils import get_model
 
+
+# ToDo: Add model package link for release
 MODEL_PACKAGE = "toDo"
 
-# ToDO: Create
+
 def Baseline(cache_dir=None):
     """
-    Instantiates the most complex DanSpeech model with a lot of parameters
+    Baseline DanSpeech model.
 
-    :return: Pretrained DeepSpeech model
+    2 Conv layers
+    5 RNN Layers with 800 hidden units
+
+    :return: Pretrained DeepSpeech (Baseline) model
     """
-    model_path = get_model(model_name="Baseline.pth", origin=MODEL_PACKAGE, file_hash="e2c0c16d518fc57cd61c86cbb0170660", cache_dir=cache_dir)
+    model_path = get_model(model_name="Baseline.pth", origin=MODEL_PACKAGE,
+                           file_hash="e2c0c16d518fc57cd61c86cbb0170660", cache_dir=cache_dir)
     model = DeepSpeech.load_model(model_path)
     return model
 

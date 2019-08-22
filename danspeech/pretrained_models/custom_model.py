@@ -1,12 +1,12 @@
-
 from danspeech.deepspeech.model import DeepSpeech
 
-# ToDO: Create
+
 def CustomModel(model_path):
     """
-    Instantiates the most complex DanSpeech model with a lot of parameters
+    Instantiates customly trained models
 
-    :return: Pretrained DeepSpeech model
+    :param model_path: Path to custom trained model
+    :return: Custom DeepSpeech model
     """
     model = DeepSpeech.load_model(model_path)
     return model
