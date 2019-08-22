@@ -113,10 +113,10 @@ class BatchDataLoader(DataLoader):
 # ToDO: Remove when done testing
 if __name__ == '__main__':
     from danspeech.audio.augmentation import DanSpeechAugmenter
-    from danspeech.pretrained_models import Units400
+    from danspeech.pretrained_models import TestModel
     from danspeech.audio.parsers import SpectrogramAudioParser
 
-    model = Units400()
+    model = TestModel()
     augmenter = DanSpeechAugmenter(model.audio_conf["sampling_rate"])
     parser = SpectrogramAudioParser(audio_config=model.audio_conf,
                                     data_augmenter=augmenter)
