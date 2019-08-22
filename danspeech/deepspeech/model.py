@@ -603,60 +603,6 @@ class DeepSpeech(nn.Module):
         return model
 
     @staticmethod
-    def serialize(model, optimizer=None, epoch=None, iteration=None, loss_results=None,
-                  cer_results_corr=None, wer_results_corr=None, cer_results_ncorr=None,
-                  wer_results_ncorr=None, avg_loss=None, meta=None, distributed=False):
-        """
-
-        # TODO: Refactor but find out what we want to serialize.
-        # When is this method needed. Should it really lie in training repo? or ?
-
-        """
-
-        if distributed:
-            package = {
-                'version': model.module.version,
-                'hidden_size': model.module.hidden_size,
-                'hidden_layers': model.module.hidden_layers,
-                'rnn_type': supported_rnns_inv.get(model.module.rnn_type, model.module.rnn_type.__name__.lower()),
-                'audio_conf': model.module.audio_conf,
-                'labels': model.module.labels,
-                'state_dict': model.module.state_dict(),
-                'bidirectional': model.module.bidirectional,
-                'conv_layers': model.module.conv_layers
-            }
-        else:
-            package = {
-                'version': model.version,
-                'hidden_size': model.hidden_size,
-                'hidden_layers': model.hidden_layers,
-                'rnn_type': supported_rnns_inv.get(model.rnn_type, model.rnn_type.__name__.lower()),
-                'audio_conf': model.audio_conf,
-                'labels': model.labels,
-                'state_dict': model.state_dict(),
-                'bidirectional': model.bidirectional,
-                'conv_layers': model.conv_layers
-            }
-
-        if optimizer is not None:
-            package['optim_dict'] = optimizer.state_dict()
-        if avg_loss is not None:
-            package['avg_loss'] = avg_loss
-        if epoch is not None:
-            package['epoch'] = epoch + 1  # increment for readability
-        if iteration is not None:
-            package['iteration'] = iteration
-        if loss_results is not None:
-            package['loss_results'] = loss_results
-            package['cer_results'] = cer_results_corr
-            package['wer_results'] = wer_results_corr
-            package['cer_results_ncorr'] = cer_results_ncorr
-            package['wer_results_ncorr'] = wer_results_ncorr
-        if meta is not None:
-            package['meta'] = meta
-        return package
-
-    @staticmethod
     def get_param_size(model):
         """
         Get the number of parameters for a given model.
