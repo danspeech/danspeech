@@ -1,7 +1,9 @@
-from .conv1 import Conv1
 from .danspeech_primary import DanSpeechPrimary
-from .rnn3 import Rnn3
-from .units400 import Units400
-from .uni_stream import StreamingRNN
-from .uni_stream_large import StreamingRNNLarge
-
+from .test_model import TestModel
+from .streaming_model_CPU import CPUStreamingRNN
+from .streaming_model_GPU import GPUStreamingRNN
+from .baseline_model import Baseline
+from .custom_model import CustomModel
+from .folketinget_model import Folketinget
+from .transfer_learned_model import TransferLearned
+from .librispeech import EnglishLibrispeech

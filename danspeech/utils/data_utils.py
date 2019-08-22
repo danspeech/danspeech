@@ -30,7 +30,6 @@ def validate_file(fpath, file_hash, chunk_size=65535):
     :param chunk_size: Bytes to read at a time (leave unless large files)
     :return: Whether the file is valid
     """
-
     if str(_hash_file(fpath, chunk_size)) == str(file_hash):
         return True
     else:
