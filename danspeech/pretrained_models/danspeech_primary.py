@@ -13,7 +13,7 @@ def DanSpeechPrimary(cache_dir=None):
     3 Conv layers
     9 RNN Layers with 1200 hidden units
 
-    WARNING: This model is really slow, so we suggest you use it GPU.
+    WARNING: This model is really slow, so we suggest you use it with a GPU.
 
     :return: Pretrained DeepSpeech (Best Performing) model
     """
