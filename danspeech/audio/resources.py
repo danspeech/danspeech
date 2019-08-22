@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import os
 import stat
@@ -12,18 +14,18 @@ import io
 from abc import ABC, abstractmethod
 import scipy.io.wavfile as wav
 
-# attempt to use the Python 2 modules
-try:
-    from urllib import urlencode
-    from urllib2 import Request, urlopen, URLError, HTTPError
-except ImportError:
-    # use the Python 3 modules
-    from urllib.parse import urlencode
-    from urllib.request import Request, urlopen
-    from urllib.error import URLError, HTTPError
+
+class SamplingRateWarning(Warning):
+    pass
 
 
-def load_audio(path):
+def load_audio_wavPCM(path):
+    """
+    Fast load of wav. This works well if you are certain that your wav files are PCM encoded.
+
+    :param path: Path to wave file
+    :return: Array of data ready for recognition.
+    """
     _, sound = wav.read(path)
 
     if len(sound.shape) > 1:
@@ -33,6 +35,47 @@ def load_audio(path):
             sound = sound.mean(axis=1)  # multiple channels, average
 
     return sound.astype(float)
+
+
+def load_audio(path, duration=None, offset=None):
+    """
+    Loads a sound file.
+
+    Supported formats are WAV, AIFF, FLAC.
+
+    :param path: Path to sound file
+    :param duration: Duration of how much to use. If duration is not specified,
+    then it will record until there is no more audio input.
+    :param offset: Where to start in the clip
+    :return: array ready for speech recognition
+    """
+
+    with SpeechFile(filepath=path) as source:
+        frames_bytes = io.BytesIO()
+        seconds_per_buffer = (source.chunk + 0.0) / source.sampling_rate
+        elapsed_time = 0
+        offset_time = 0
+        offset_reached = False
+        while True:  # loop for the total number of chunks needed
+            if offset and not offset_reached:
+                offset_time += seconds_per_buffer
+                if offset_time > offset:
+                    offset_reached = True
+
+            buffer = source.stream.read(source.chunk)
+            if len(buffer) == 0:
+                break
+
+            if offset_reached or not offset:
+                elapsed_time += seconds_per_buffer
+                if duration and elapsed_time > duration:
+                    break
+
+                frames_bytes.write(buffer)
+
+        frame_data = frames_bytes.getvalue()
+        frames_bytes.close()
+        return AudioData(frame_data, source.sampling_rate, source.sampling_width).get_array_data()
 
 
 def shutil_which(pgm):
@@ -117,16 +160,15 @@ class SpeechSource(ABC):
 class SpeechFile(SpeechSource):
 
     def __init__(self, filepath):
-        self.FILEPATH = filepath
-        self.SAMPLE_RATE = None
-        self.DURATION = None
-        self.CHUNK = None
-        self.FRAME_COUNT = None
+        self.filepath = filepath
+        self.sampling_rate = 16000
+        self.duration = None
+        self.chunk = None
+        self.frame_count = None
         self.stream = None
         self.little_endian = False
-        self.data = None
         self.audio_reader = None
-        self.little_endian = False
+        self.sampling_width = None
 
     def __enter__(self):
         """
@@ -140,21 +182,21 @@ class SpeechFile(SpeechSource):
         """
         try:
             # attempt to read the file as WAV
-            self.audio_reader = wave.open(self.FILEPATH, "rb")
+            self.audio_reader = wave.open(self.filepath, "rb")
             # RIFF WAV is a little-endian format (most ``audioop`` operations assume that the frames are stored in little-endian form)
             self.little_endian = True
         except (wave.Error, EOFError):
             try:
                 # attempt to read the file as AIFF
-                self.audio_reader = aifc.open(self.FILEPATH, "rb")
+                self.audio_reader = aifc.open(self.filepath, "rb")
                 # AIFF is a big-endian format
                 self.little_endian = False
             except (aifc.Error, EOFError):
                 # attempt to read the file as FLAC
-                if hasattr(self.FILEPATH, "read"):
-                    flac_data = self.FILEPATH.read()
+                if hasattr(self.filepath, "read"):
+                    flac_data = self.filepath.read()
                 else:
-                    with open(self.FILEPATH, "rb") as f:
+                    with open(self.filepath, "rb") as f:
                         flac_data = f.read()
 
                 # run the FLAC converter with the FLAC data to get the AIFF data
@@ -184,29 +226,36 @@ class SpeechFile(SpeechSource):
                     raise ValueError(
                         "Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format")
                 self.little_endian = False  # AIFF is a big-endian format
+
         assert 1 <= self.audio_reader.getnchannels() <= 2, "Audio must be mono or stereo"
-        self.SAMPLE_WIDTH = self.audio_reader.getsampwidth()
+        self.sampling_width = self.audio_reader.getsampwidth()
 
-        self.SAMPLE_RATE = self.audio_reader.getframerate()
+        if self.sampling_rate != self.audio_reader.getframerate():
+            warnings.warn(
+                "Specified file {0} sampling rate. DanSpeech currently only supports 16000 sampling rate. Will "
+                "resample to 16000 sampling rate".format(self.audio_reader.getframerate()),
+                SamplingRateWarning)
 
-        self.CHUNK = 4096
-        self.FRAME_COUNT = self.audio_reader.getnframes()
-        self.DURATION = self.FRAME_COUNT / float(self.SAMPLE_RATE)
+        self.chunk = 4096
+        self.frame_count = self.audio_reader.getnframes()
+        self.duration = self.frame_count / float(self.sampling_rate)
         self.stream = SpeechFile.SpeechFileStream(self.audio_reader, self.little_endian)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        # only close the file if it was opened by this class in the first place (if the file was originally given as a path)
-        if not hasattr(self.FILEPATH, "read"):
+        # only close the file if it was opened by this class in the first place
+        # (if the file was originally given as a path)
+        if not hasattr(self.filepath, "read"):
             self.audio_reader.close()
         self.stream = None
-        self.DURATION = None
+        self.duration = None
 
     class SpeechFileStream(object):
         def __init__(self, audio_reader, little_endian):
             # an audio file object (e.g., a `wave.Wave_read` instance)
             self.audio_reader = audio_reader
-            # whether the audio data is little-endian (when working with big-endian things, we'll have to convert it to little-endian before we process it)
+            # whether the audio data is little-endian (when working with big-endian things,
+            # we'll have to convert it to little-endian before we process it)
             self.little_endian = little_endian
 
         def read(self, size=-1):
@@ -264,10 +313,10 @@ class Microphone(SpeechSource):
     Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
     """
 
-    def __init__(self, device_index=None, sample_rate=None, chunk_size=1024):
+    def __init__(self, device_index=None, sampling_rate=None, chunk_size=1024):
         assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
-        assert sample_rate is None or (
-                isinstance(sample_rate, int) and sample_rate > 0), "Sample rate must be None or a positive integer"
+        assert sampling_rate is None or (
+                isinstance(sampling_rate, int) and sampling_rate > 0), "Sample rate must be None or a positive integer"
         assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
 
         # set up PyAudio
@@ -278,20 +327,20 @@ class Microphone(SpeechSource):
             if device_index is not None:  # ensure device index is in range
                 assert 0 <= device_index < count, "Device index out of range ({} devices available; device index should be between 0 and {} inclusive)".format(
                     count, count - 1)
-            if sample_rate is None:  # automatically set the sample rate to the hardware's default sample rate if not specified
+            if sampling_rate is None:  # automatically set the sample rate to the hardware's default sample rate if not specified
                 device_info = audio.get_device_info_by_index(
                     device_index) if device_index is not None else audio.get_default_input_device_info()
                 assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info[
                     "defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
-                sample_rate = int(device_info["defaultSampleRate"])
+                sampling_rate = int(device_info["defaultSampleRate"])
         finally:
             audio.terminate()
 
         self.device_index = device_index
         self.format = self.pyaudio_module.paInt16  # 16-bit int sampling
-        self.SAMPLE_WIDTH = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
-        self.SAMPLE_RATE = sample_rate  # sampling rate in Hertz
-        self.CHUNK = chunk_size  # number of frames stored in each buffer
+        self.sampling_width = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
+        self.sampling_rate = sampling_rate  # sampling rate in Hertz
+        self.chunk = chunk_size  # number of frames stored in each buffer
 
         self.audio = None
         self.stream = None
@@ -362,7 +411,7 @@ class Microphone(SpeechSource):
             self.stream = Microphone.MicrophoneStream(
                 self.audio.open(
                     input_device_index=self.device_index, channels=1, format=self.format,
-                    rate=self.SAMPLE_RATE, frames_per_buffer=self.CHUNK, input=True,
+                    rate=self.sampling_rate, frames_per_buffer=self.chunk, input=True,
                 )
             )
         except Exception:
@@ -511,77 +560,6 @@ class AudioData(object):
         sample_width = self.sample_width if convert_width is None else convert_width
         return _wav2array(1, sample_width, raw_data).squeeze().astype(float)
 
-    def get_aiff_data(self, convert_rate=None, convert_width=None):
-        """
-        Returns a byte string representing the contents of an AIFF-C file containing the audio represented by the ``AudioData`` instance.
-
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
-
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
-
-        Writing these bytes directly to a file results in a valid `AIFF-C file <https://en.wikipedia.org/wiki/Audio_Interchange_File_Format>`__.
-        """
-        raw_data = self.get_raw_data(convert_rate, convert_width)
-        sample_rate = self.sample_rate if convert_rate is None else convert_rate
-        sample_width = self.sample_width if convert_width is None else convert_width
-
-        # the AIFF format is big-endian, so we need to covnert the little-endian raw data to big-endian
-        if hasattr(audioop, "byteswap"):  # ``audioop.byteswap`` was only added in Python 3.4
-            raw_data = audioop.byteswap(raw_data, sample_width)
-        else:  # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
-            raw_data = raw_data[sample_width - 1::-1] + b"".join(
-                raw_data[i + sample_width:i:-1] for i in range(sample_width - 1, len(raw_data), sample_width))
-
-        # generate the AIFF-C file contents
-        with io.BytesIO() as aiff_file:
-            aiff_writer = aifc.open(aiff_file, "wb")
-            try:  # note that we can't use context manager, since that was only added in Python 3.4
-                aiff_writer.setframerate(sample_rate)
-                aiff_writer.setsampwidth(sample_width)
-                aiff_writer.setnchannels(1)
-                aiff_writer.writeframes(raw_data)
-                aiff_data = aiff_file.getvalue()
-            finally:  # make sure resources are cleaned up
-                aiff_writer.close()
-        return aiff_data
-
-    def get_flac_data(self, convert_rate=None, convert_width=None):
-        """
-        Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
-
-        Note that 32-bit FLAC is not supported. If the audio data is 32-bit and ``convert_width`` is not specified, then the resulting FLAC will be a 24-bit FLAC.
-
-        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
-
-        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
-
-        Writing these bytes directly to a file results in a valid `FLAC file <https://en.wikipedia.org/wiki/FLAC>`__.
-        """
-        assert convert_width is None or (
-                convert_width % 1 == 0 and 1 <= convert_width <= 3), "Sample width to convert to must be between 1 and 3 inclusive"
-
-        if self.sample_width > 3 and convert_width is None:  # resulting WAV data would be 32-bit, which is not convertable to FLAC using our encoder
-            convert_width = 3  # the largest supported sample width is 24-bit, so we'll limit the sample width to that
-
-        # run the FLAC converter with the WAV data to get the FLAC data
-        wav_data = self.get_wav_data(convert_rate, convert_width)
-        flac_converter = get_flac_converter()
-        if os.name == "nt":  # on Windows, specify that the process is to be started without showing a console window
-            startup_info = subprocess.STARTUPINFO()
-            startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # specify that the wShowWindow field of `startup_info` contains a value
-            startup_info.wShowWindow = subprocess.SW_HIDE  # specify that the console window should be hidden
-        else:
-            startup_info = None  # default startupinfo
-        process = subprocess.Popen([
-            flac_converter,
-            "--stdout", "--totally-silent",
-            # put the resulting FLAC file in stdout, and make sure it's not mixed with any program output
-            "--best",  # highest level of compression available
-            "-",  # the input FLAC file contents will be given in stdin
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=startup_info)
-        flac_data, stderr = process.communicate(wav_data)
-        return flac_data
-
 
 """
 Local dev tests
@@ -592,6 +570,6 @@ if __name__ == '__main__':
     # with SpeechFile(filepath=file_path, sampling_rate=16000) as source:
     #    pass
 
-    m = Microphone(sample_rate=16000)
+    m = Microphone(sampling_rate=16000)
     print(Microphone.list_microphone_names())
     # print(m.list_microphone_names())

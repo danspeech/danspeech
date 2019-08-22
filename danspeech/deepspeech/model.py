@@ -1,5 +1,6 @@
 import json
 import math
+import os
 from collections import OrderedDict
 
 import torch
@@ -8,6 +9,8 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
 from danspeech.errors.model_errors import ConvError
+from danspeech.deepspeech.utils import get_default_audio_config
+
 
 supported_rnns = {
     'lstm': nn.LSTM,
@@ -146,28 +149,30 @@ class Lookahead(nn.Module):
 
 class DeepSpeech(nn.Module):
 
-    # ToDO: Rename nb_layers to nb_rnn_layers or something
-    def __init__(self, rnn_type=nn.LSTM, labels=None, rnn_hidden_size=768, nb_layers=5, audio_conf=None,
+    def __init__(self, rnn_type=nn.LSTM, labels=None, rnn_hidden_size=768, rnn_hidden_layers=5, audio_conf=None,
                  bidirectional=True, context=20, conv_layers=2):
         super(DeepSpeech, self).__init__()
 
         if not labels:
-            with open("labels.json", "r", encoding="utf-8") as label_file:
+            from . import __path__ as ROOT_PATH
+            label_path = os.path.join(ROOT_PATH[0], "labels.json")
+            with open(label_path, "r", encoding="utf-8") as label_file:
                 labels = str(''.join(json.load(label_file)))
 
         if audio_conf is None:
-            audio_conf = {}
+            audio_conf = get_default_audio_config()
 
         # model metadata needed for serialization/deserialization
         self.version = '0.0.1'
         self.hidden_size = rnn_hidden_size
-        self.hidden_layers = nb_layers
+        self.hidden_layers = rnn_hidden_layers
         self.rnn_type = rnn_type
         self.audio_conf = audio_conf or {}
         self.labels = labels
         self.bidirectional = bidirectional
+        self.conv_layers = conv_layers
 
-        sample_rate = self.audio_conf.get("sample_rate", 16000)
+        sample_rate = self.audio_conf.get("sampling_rate", 16000)
         window_size = self.audio_conf.get("window_size", 0.02)
         num_classes = len(self.labels)
 
@@ -223,7 +228,7 @@ class DeepSpeech(nn.Module):
         rnn = BatchRNN(input_size=rnn_input_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type,
                        bidirectional=bidirectional, batch_norm=False)
         rnns.append(('0', rnn))
-        for x in range(nb_layers - 1):
+        for x in range(rnn_hidden_layers - 1):
             rnn = BatchRNN(input_size=rnn_hidden_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type,
                            bidirectional=bidirectional)
             rnns.append(('%d' % (x + 1), rnn))
@@ -264,6 +269,11 @@ class DeepSpeech(nn.Module):
         x = self.inference_softmax(x)
         return x, output_lengths
 
+    def convert_lstm(self):
+        from distiller.modules import DistillerLSTM
+        for batchRNN in self.rnns:
+            batchRNN.rnn = DistillerLSTM.from_pytorch_impl(batchRNN.rnn)
+
     def get_seq_lens(self, input_length):
         """
         Given a 1D Tensor or Variable containing integer sequence lengths, return a 1D tensor or variable
@@ -280,7 +290,12 @@ class DeepSpeech(nn.Module):
     @classmethod
     def load_model(cls, path, conv_layers=2):
         package = torch.load(path, map_location=lambda storage, loc: storage)
-        model = cls(rnn_hidden_size=package['hidden_size'], nb_layers=package['hidden_layers'],
+
+        # toDO: Remove when all models are repackaged
+        if "conv_layers" in package:
+            conv_layers = package["conv_layers"]
+
+        model = cls(rnn_hidden_size=package['hidden_size'], rnn_hidden_layers=package['hidden_layers'],
                     labels=package['labels'], audio_conf=package['audio_conf'],
                     rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
                     conv_layers=conv_layers)
@@ -291,11 +306,17 @@ class DeepSpeech(nn.Module):
 
     @classmethod
     def load_model_package(cls, package, conv_layers=2):
-        model = cls(rnn_hidden_size=package['hidden_size'], nb_layers=package['hidden_layers'],
+        # toDO: Remove when all models are repackaged
+        if "conv_layers" in package:
+            conv_layers = package["conv_layers"]
+
+        model = cls(rnn_hidden_size=package['hidden_size'], rnn_hidden_layers=package['hidden_layers'],
                     labels=package['labels'], audio_conf=package['audio_conf'],
                     rnn_type=supported_rnns[package['rnn_type']], bidirectional=package.get('bidirectional', True),
                     conv_layers=conv_layers)
         model.load_state_dict(package['state_dict'])
+        for x in model.rnns:
+            x.flatten_parameters()
         return model
 
     @staticmethod
@@ -312,7 +333,8 @@ class DeepSpeech(nn.Module):
                 'audio_conf': model.module.audio_conf,
                 'labels': model.module.labels,
                 'state_dict': model.module.state_dict(),
-                'bidirectional': model.module.bidirectional
+                'bidirectional': model.module.bidirectional,
+                'conv_layers': model.module.conv_layers
             }
         else:
             package = {
@@ -323,7 +345,8 @@ class DeepSpeech(nn.Module):
                 'audio_conf': model.audio_conf,
                 'labels': model.labels,
                 'state_dict': model.state_dict(),
-                'bidirectional': model.bidirectional
+                'bidirectional': model.bidirectional,
+                'conv_layers': model.conv_layers
             }
 
         if optimizer is not None:
@@ -336,8 +359,8 @@ class DeepSpeech(nn.Module):
             package['iteration'] = iteration
         if loss_results is not None:
             package['loss_results'] = loss_results
-            package['cer_results_corr'] = cer_results_corr
-            package['wer_results_corr'] = wer_results_corr
+            package['cer_results'] = cer_results_corr
+            package['wer_results'] = wer_results_corr
             package['cer_results_ncorr'] = cer_results_ncorr
             package['wer_results_ncorr'] = wer_results_ncorr
         if meta is not None:
@@ -353,6 +376,237 @@ class DeepSpeech(nn.Module):
                 tmp *= x
             params += tmp
         return params
+
+
+class MaskConvStream(nn.Module):
+    def __init__(self, seq_module):
+        """
+        ToDO: Change name frmo MaskConv
+        We are not masking anymore, since it should only handle single sequence.
+
+        Input needs to be in the shape of (BxCxDxT)
+        :param seq_module: The sequential module containing the conv stack.
+        """
+        super(MaskConvStream, self).__init__()
+        self.seq_module = seq_module
+        self.left_1 = None
+        self.left_2 = None
+
+    def forward(self, x, is_first, is_last):
+        """
+        :param x: The input of size BxCxDxT
+        :param lengths: The actual length of each sequence in the batch
+        :return: Masked output from the module
+        """
+
+        # First requires zero padding on left size for both conv layers
+        for i, module in enumerate(self.seq_module):
+
+            # Paddings for first and last
+            if is_first and (i == 0 or i == 3):
+                x = F.pad(x, pad=(5, 0), value=0)  # Zero padding left
+            elif is_last and (i == 0 or i == 3):
+                x = F.pad(x, pad=(0, 5), value=0)  # Zero padding ending
+
+            if not is_first:
+                if i == 0:
+                    # print(self.left_1[:,:,:,:])
+                    x = torch.cat([self.left_1, x], dim=3)
+                    # print(x[:,:,:,0:10])
+                if i == 3:
+                    x = torch.cat([self.left_2, x], dim=3)
+            # Store for next chunk (precomputed)
+            if not is_last:
+                if i == 0:
+                    self.left_1 = x[:, :, :, -10:]  # Store for next chunk
+                elif i == 3:
+                    self.left_2 = x[:, :, :, -10:]  # Store for next chunk
+
+            x = module(x)
+
+        return x
+
+
+class BatchRNNStream(nn.Module):
+    def __init__(self, input_size, hidden_size, rnn_type=nn.LSTM, batch_norm=True):
+        super(BatchRNNStream, self).__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.batch_norm = SequenceWise(nn.BatchNorm1d(input_size)) if batch_norm else None
+        self.rnn = rnn_type(input_size=input_size, hidden_size=hidden_size,
+                            bidirectional=False, bias=True)
+        self.num_directions = 1
+        self.previous_hidden = None
+        self.previous_init = False
+
+    def flatten_parameters(self):
+        self.rnn.flatten_parameters()
+
+    def forward(self, x, is_last):
+
+        if self.batch_norm is not None:
+            x = self.batch_norm(x)
+
+        if not self.previous_init:
+            x, h = self.rnn(x)
+            self.previous_init = True
+        else:
+            x, h = self.rnn(x, hx=self.previous_hidden)
+        # x = nn.utils.rnn.pack_padded_sequence(x, output_lengths)
+        # x, _ = nn.utils.rnn.pad_packed_sequence(x)
+
+        self.previous_hidden = h
+        if is_last:
+            self.previous_hidden = None
+            self.previous_init = False
+
+        return x
+
+
+class LookaheadStream(nn.Module):
+    # Wang et al 2016 - Lookahead Convolution Layer for Unidirectional Recurrent Neural Networks
+    # input shape - sequence, batch, feature - TxNxH
+    # output shape - same as input
+    def __init__(self, n_features, context):
+        # should we handle batch_first=True?
+        super(LookaheadStream, self).__init__()
+        self.n_features = n_features
+        self.context = context
+        self.pad = (0, self.context - 1)
+        self.conv = nn.Conv1d(self.n_features, self.n_features, kernel_size=self.context, stride=1,
+                              groups=self.n_features, padding=0, bias=None)
+
+        self.hidden_initiated = False
+        self.hidden_states_buffer = None
+
+        self.hard_tanh = nn.Hardtanh(0, 20, inplace=True)
+
+    def forward(self, x, is_last, is_first):
+        if not self.hidden_initiated or is_first:
+            self.hidden_states_buffer = x
+            self.hidden_initiated = True
+            return torch.tensor(0)  # Dummy return
+        else:
+            out = torch.cat([self.hidden_states_buffer, x], dim=0)
+            # Save the last context-1 they cannot be computed until next pass
+            self.hidden_states_buffer = x[-(self.context-1):, :, :]
+
+        out = out.transpose(0, 1).transpose(1, 2)
+
+        if is_last:
+            out = F.pad(out, pad=self.pad, value=0)
+
+        out = self.conv(out)
+        out = out.transpose(1, 2).transpose(0, 1).contiguous()
+
+        out = self.hard_tanh(out)
+
+        if is_last:
+            self.hidden_initiated = False
+            self.hidden_states_buffer = None
+
+        return out
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(' \
+               + 'n_features=' + str(self.n_features) \
+               + ', context=' + str(self.context) + ')'
+
+
+class DeepSpeechStreamInference(nn.Module):
+    """
+    Streaming inference with uni-directional networks
+    """
+
+    def __init__(self, rnn_type=nn.LSTM, labels="abc", rnn_hidden_size=768, nb_layers=5, audio_conf=None, context=20):
+        super(DeepSpeechStreamInference, self).__init__()
+
+        # model metadata needed for serialization/deserialization
+        if audio_conf is None:
+            audio_conf = {}
+        self.version = '0.0.1'
+        self.hidden_size = rnn_hidden_size
+        self.hidden_layers = nb_layers
+        self.rnn_type = rnn_type
+        self.audio_conf = audio_conf or {}
+        self.labels = labels
+        self.context = context
+        self.conv = MaskConvStream(nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=(41, 11), stride=(2, 2), padding=(20, 0)),
+            nn.BatchNorm2d(32),
+            nn.Hardtanh(0, 20, inplace=True),
+            nn.Conv2d(32, 32, kernel_size=(21, 11), stride=(2, 1), padding=(10, 0)),
+            nn.BatchNorm2d(32),
+            nn.Hardtanh(0, 20, inplace=True)))
+
+        sample_rate = self.audio_conf.get("sample_rate", 16000)
+        window_size = self.audio_conf.get("window_size", 0.02)
+
+        # Based on above convolutions and spectrogram size using conv formula (W - F + 2P)/ S+1
+        rnn_input_size = int(math.floor((sample_rate * window_size) / 2) + 1)
+        rnn_input_size = int(math.floor(rnn_input_size + 2 * 20 - 41) / 2 + 1)
+        rnn_input_size = int(math.floor(rnn_input_size + 2 * 10 - 21) / 2 + 1)
+        rnn_input_size *= 32
+
+        rnns = []
+        rnn = BatchRNNStream(input_size=rnn_input_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type,
+                             batch_norm=False)
+        rnns.append(('0', rnn))
+        for x in range(nb_layers - 1):
+            rnn = BatchRNNStream(input_size=rnn_hidden_size, hidden_size=rnn_hidden_size, rnn_type=rnn_type)
+            rnns.append(('%d' % (x + 1), rnn))
+        self.rnns = nn.Sequential(OrderedDict(rnns))
+        self.lookahead = LookaheadStream(rnn_hidden_size, context=context)
+        self.init_output_layer()
+
+    def init_output_layer(self):
+        num_classes = len(self.labels)
+        fully_connected = nn.Sequential(
+            nn.BatchNorm1d(self.hidden_size),
+            nn.Linear(self.hidden_size, num_classes, bias=False)
+        )
+        self.fc = nn.Sequential(
+            SequenceWise(fully_connected),
+        )
+        self.inference_softmax = InferenceBatchSoftmax()
+
+    def forward(self, x, is_first, is_last):
+
+        x = self.conv(x, is_first, is_last)
+        sizes = x.size()
+        x = x.view(sizes[0], sizes[1] * sizes[2], sizes[3])  # Collapse feature dimension
+        x = x.transpose(1, 2).transpose(0, 1).contiguous()  # TxNxH
+
+        for rnn in self.rnns:
+            x = rnn(x, is_last)
+
+        x = self.lookahead(x, is_last, is_first)
+        # If x returned is none, then the layer is buffering for processing
+        if len(x.size()) < 2:
+            return None
+
+        x = self.fc(x)
+        x = x.transpose(0, 1)
+
+        # identity in training mode, softmax in eval mode
+        x = self.inference_softmax(x)
+        return x
+
+    @classmethod
+    def load_model(cls, path):
+        package = torch.load(path, map_location=lambda storage, loc: storage)
+        model = cls(rnn_hidden_size=package['hidden_size'], nb_layers=package['hidden_layers'],
+                    labels=package['labels'], audio_conf=package['audio_conf'],
+                    rnn_type=supported_rnns[package['rnn_type']])
+
+        # Dummy operatino
+        package["state_dict"]["lookahead.conv.weight"] = package["state_dict"]["lookahead.0.conv.weight"]
+        del package["state_dict"]["lookahead.0.conv.weight"]
+        model.load_state_dict(package['state_dict'])
+
+        for x in model.rnns:
+            x.flatten_parameters()
+        return model
 
 
 if __name__ == '__main__':
