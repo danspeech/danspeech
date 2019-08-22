@@ -110,13 +110,14 @@ class BatchDataLoader(DataLoader):
         self.collate_fn = _collate_fn
 
 
+
 # ToDO: Remove when done testing
 if __name__ == '__main__':
     from danspeech.audio.augmentation import DanSpeechAugmenter
-    from danspeech.pretrained_models import TestModel
+    from danspeech.pretrained_models import Units400
     from danspeech.audio.parsers import SpectrogramAudioParser
 
-    model = TestModel()
+    model = Units400()
     augmenter = DanSpeechAugmenter(model.audio_conf["sampling_rate"])
     parser = SpectrogramAudioParser(audio_config=model.audio_conf,
                                     data_augmenter=augmenter)
