@@ -3,8 +3,6 @@ import torch
 from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized
 from danspeech.audio.parsers import SpectrogramAudioParser, InferenceSpectrogramAudioParser
-from danspeech.pretrained_models import DanSpeechPrimary
-from danspeech.language_models import DSL3gram
 
 class DanSpeechRecognizer(object):
 
@@ -45,7 +43,7 @@ class DanSpeechRecognizer(object):
         self.streaming = False
         self.full_output = []
         self.iterating_transcript = ""
-
+        """
         self.second_model = DanSpeechPrimary()
         self.audio_config = self.second_model.audio_conf
         self.second_model =  self.second_model.to(self.device)
@@ -58,7 +56,7 @@ class DanSpeechRecognizer(object):
                                       alpha=self.alpha, beta=self.beta,
                                       beam_width=self.beam_width, num_processes=6, cutoff_prob=1.0,
                                       cutoff_top_n=40, blank_index=self.labels.index('_'))
-
+        """
     def update_model(self, model):
         self.audio_config = model.audio_conf
         self.model = model.to(self.device)
@@ -167,11 +165,11 @@ class DanSpeechRecognizer(object):
             else:
                 output = ""
                 if len(self.iterating_transcript) > 1:
-                    out, _ = self.second_model(final)
-                    decoded_out, _ = self.decoder.decode(out)
-                    decoded_out = decoded_out[0][0]
-                    output = decoded_out
-                    #output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
+                    #out, _ = self.second_model(final)
+                    #decoded_out, _ = self.decoder.decode(out)
+                    #decoded_out = decoded_out[0][0]
+                    #output = decoded_out
+                    output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
                 self.iterating_transcript = ""
                 return output
 
