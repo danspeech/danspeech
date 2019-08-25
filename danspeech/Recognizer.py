@@ -11,15 +11,11 @@ import numpy as np
 
 
 class Recognizer(object):
+    """
+    Recognizer Class, which represents a collection of speech recognition functionality.
+    """
 
     def __init__(self, model=None, lm=None, **kwargs):
-        """
-        Creates a new ``Recognizer`` instance, whi  ch represents a collection of speech recognition functionality.
-
-        lm_name requires model_name.
-        alpha and beta requires lm
-
-        """
         # minimum audio energy to consider for recording
         self.energy_threshold = 1000
 
