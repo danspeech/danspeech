@@ -92,9 +92,11 @@ class InferenceSpectrogramAudioParser(AudioParser):
         self.input_mean = 0
         self.input_std = 0
         self.alpha = 0
-        self.alpha_increment = 0.1  # Corresponds to stop relying on dataset stats after 4sec
+        self.alpha_increment = 0.1  # Corresponds to stop relying on dataset after 1 sec
         self.nr_recordings = 0
         self.nr_frames = context * 2 + 5
+
+        self.buffer = None
 
     def parse_audio(self, part_of_recording, is_last=False):
         """
@@ -105,21 +107,32 @@ class InferenceSpectrogramAudioParser(AudioParser):
         :return: Adaoted Spectrogram
         """
 
-        # Ignore last and
-        if is_last and len(part_of_recording) < 320:
+        # If the last part is beneath the required size for stft, ignore it and reset
+        if is_last and len(part_of_recording) < self.n_fft:
             if is_last:
                 self.reset()
             return []
 
-        self.alpha += self.alpha_increment
+        # If buffer has been saved, concat with the recording for the stft
+        if self.buffer:
+            part_of_recording = np.concatenate((self.buffer, part_of_recording), axis=None)
 
+        # Buffer for next iteration
+        self.buffer = part_of_recording[-self.hop_length:]
+
+
+        # Create the spectrogram
         D = librosa.stft(part_of_recording, n_fft=self.n_fft, hop_length=self.hop_length,
                          win_length=self.n_fft, window=self.window, center=False)
 
         spect, phase = librosa.magphase(D)
+
         # S = log(S+1)
         spect = np.log1p(spect)
 
+
+        # Adaptive normalization parameters
+        self.alpha += self.alpha_increment
         self.input_mean = (self.input_mean + np.mean(spect)) / 2
         self.input_std = (self.input_std + np.std(spect)) / 2
 
@@ -141,6 +154,7 @@ class InferenceSpectrogramAudioParser(AudioParser):
         return spect
 
     def reset(self):
+        self.buffer = None
         self.input_mean = 0
         self.input_std = 0
         self.alpha = 0
