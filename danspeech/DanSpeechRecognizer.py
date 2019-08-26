@@ -3,8 +3,7 @@ import torch
 from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized
 from danspeech.audio.parsers import SpectrogramAudioParser, InferenceSpectrogramAudioParser
-from danspeech.pretrained_models import DanSpeechPrimary
-from danspeech.language_models import DSL3gram
+
 
 class DanSpeechRecognizer(object):
 
