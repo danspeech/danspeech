@@ -12,7 +12,7 @@ class DanSpeechRecognizer(object):
                  beam_width=64):
 
         self.device = torch.device("cuda" if with_gpu else "cpu")
-        print(self.device)
+        print("Using device: {0}".format(self.device))
 
         # Init model if given
         if model_name:
@@ -40,18 +40,15 @@ class DanSpeechRecognizer(object):
             self.lm = None
             self.decoder = None
 
-        # Do not enable streaming by default
-        self.streaming = False
-
-
     def update_model(self, model):
         self.audio_config = model.audio_conf
         self.model = model.to(self.device)
         self.model.eval()
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
 
+        self.labels = self.model.labels
         # When updating model, always update decoder because of labels
-        self.update_decoder(labels=self.model.labels)
+        self.update_decoder(labels=self.labels)
 
     def update_decoder(self, lm=None, alpha=None, beta=None, labels=None, beam_width=None):
 
@@ -92,13 +89,11 @@ class DanSpeechRecognizer(object):
             else:
                 self.decoder = GreedyDecoder(labels=self.labels, blank_index=self.labels.index('_'))
 
-    def enable_streaming(self, streaming_model, secondary_model=None):
+
+    def enable_streaming(self, secondary_model=None, return_string_parts=True):
         """
         Enables the DanSpeech system to perform speech recognition on a stream of audio data.
 
-        :param streaming_model: The DanSpeech model to perform streaming. This model needs to be uni-directional.
-        The two available DanSpeech models are CPUStreamingRNN, GPUStreamingRNN. This is required for streaming
-        to work.
         :param secondary_model: A DanSpeech to perform speech recognition when a buffer of audio data has been build,
         hence this model can be given to provide better final transcriptions. If None, then the system will use the
         streaming model for the final output.
@@ -106,9 +101,12 @@ class DanSpeechRecognizer(object):
         # Streaming declarations
         self.full_output = []
         self.iterating_transcript = ""
-        self.model = streaming_model
-        self.secondary_model = secondary_model
-        self.streaming = True
+        if secondary_model:
+            self.secondary_model = secondary_model.to(self.device)
+            self.secondary_model.eval()
+        else:
+            self.secondary_model = None
+
         self.spectrograms = []
 
         # This is needed for streaming decoding
@@ -117,10 +115,16 @@ class DanSpeechRecognizer(object):
         # Use SpecroGramAudioParser
         self.audio_parser = InferenceSpectrogramAudioParser(audio_config=self.audio_config)
 
+        if return_string_parts:
+            self.string_parts = True
+        else:
+            self.string_parts = False
+
     def disable_streaming(self, keep_secondary_model=False):
-        self.streaming = False
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
+        self.greedy_decoder = None
         self.reset_streaming_params()
+        self.string_parts = False
 
         if not keep_secondary_model:
             self.secondary_model = None
@@ -134,10 +138,10 @@ class DanSpeechRecognizer(object):
 
     def streaming_transcribe(self, recording, is_last, is_first):
         recording = self.audio_parser.parse_audio(recording, is_last)
-
-        transcript = ""
+        out = ""
+        # This can happen if it is the last part of a recording and there is too little samples
+        # to generate a spectrogram
         if len(recording) != 0:
-
             if self.secondary_model:
                 self.spectrograms.append(recording)
 
@@ -164,8 +168,12 @@ class DanSpeechRecognizer(object):
             else:
                 self.iterating_transcript += transcript
 
-        if is_last:
+            if self.string_parts:
+                out = transcript
+            else:
+                out = self.iterating_transcript
 
+        if is_last:
             # If something was actually detected (require at least two characters)
             if len(self.iterating_transcript) > 1:
 
@@ -173,12 +181,7 @@ class DanSpeechRecognizer(object):
                 if self.secondary_model:
 
                     final = torch.cat(self.spectrograms, dim=1)
-
-                    # ToDo: Remove but keep for debugging now
-                    # plt.imshow(final)
-                    # plt.colorbar()
-                    # plt.show()
-                    # self.spectrograms = []
+                    self.spectrograms = []
 
                     final = final.view(1, 1, final.size(0), final.size(1))
                     final = final.to(self.device)
@@ -191,8 +194,7 @@ class DanSpeechRecognizer(object):
                     return decoded_out
 
                 else:
-
-                    # if no secondary model, check whether we need to decode it or not
+                    # if no secondary model, check whether we need to decode with LM or not
                     if self.lm != "greedy":
                         final_out = torch.cat(self.full_output, dim=1)
                         decoded_out, _ = self.decoder.decode(final_out)
@@ -200,10 +202,13 @@ class DanSpeechRecognizer(object):
                         self.reset_streaming_params()
                         return decoded_out
                     else:
+                        out = self.iterating_transcript
                         self.reset_streaming_params()
-                        return self.iterating_transcript
+                        return out
+            else:
+                return ""
 
-        return transcript
+        return out
 
     def transcribe(self, recording, show_all=False):
         recording = self.audio_parser.parse_audio(recording)

@@ -78,13 +78,12 @@ class InferenceSpectrogramAudioParser(AudioParser):
 
     Used if the audio should be transcribed in a stream.
     """
-    def __init__(self, audio_config=None, context=20):
+    def __init__(self, audio_config=None):
         # inits all audio configs
         super(InferenceSpectrogramAudioParser, self).__init__(audio_config)
 
         self.n_fft = int(self.sampling_rate * self.window_size)
         self.hop_length = int(self.sampling_rate * self.window_stride)
-        self.context = context
 
         # These are estimated from the NST dataset.
         self.dataset_mean = 5.492418704733003
@@ -93,10 +92,11 @@ class InferenceSpectrogramAudioParser(AudioParser):
         self.input_std = 0
         self.alpha = 0
         self.alpha_increment = 0.1  # Corresponds to stop relying on dataset after 1 sec
-        self.nr_recordings = 0
-        self.nr_frames = context * 2 + 5
 
         self.buffer = None
+        self.has_buffer = False # Need this because of numpy arrays
+        self.dummy_audio_buffer = []
+
 
     def parse_audio(self, part_of_recording, is_last=False):
         """
@@ -108,18 +108,31 @@ class InferenceSpectrogramAudioParser(AudioParser):
         """
 
         # If the last part is beneath the required size for stft, ignore it and reset
+        # This is needed since we always want output for the last even if too short
         if is_last and len(part_of_recording) < self.n_fft:
-            if is_last:
-                self.reset()
+            self.reset()
             return []
 
-        # If buffer has been saved, concat with the recording for the stft
-        if self.buffer:
+        self.dummy_audio_buffer.append(part_of_recording)
+
+        # We need to save hop length for next iteration
+        if self.has_buffer:
             part_of_recording = np.concatenate((self.buffer, part_of_recording), axis=None)
 
-        # Buffer for next iteration
+        # Left over samples for stft since we user "center" padding
+        extra_samples = len(part_of_recording) % self.hop_length
+
+        if extra_samples != 0:
+            extra_samples_array = part_of_recording[-extra_samples:]
+            part_of_recording = part_of_recording[:-extra_samples]
+
         self.buffer = part_of_recording[-self.hop_length:]
 
+        # If we have extra samples, use them in buffer.
+        if extra_samples != 0:
+            self.buffer = np.concatenate((self.buffer, extra_samples_array), axis=None)
+
+        self.has_buffer = True
 
         # Create the spectrogram
         D = librosa.stft(part_of_recording, n_fft=self.n_fft, hop_length=self.hop_length,
@@ -129,7 +142,6 @@ class InferenceSpectrogramAudioParser(AudioParser):
 
         # S = log(S+1)
         spect = np.log1p(spect)
-
 
         # Adaptive normalization parameters
         self.alpha += self.alpha_increment
@@ -148,14 +160,11 @@ class InferenceSpectrogramAudioParser(AudioParser):
         spect /= std
         spect = torch.FloatTensor(spect)
 
-        if is_last:
-            self.reset()
-
         return spect
 
     def reset(self):
         self.buffer = None
+        self.has_buffer = False
         self.input_mean = 0
         self.input_std = 0
         self.alpha = 0
-        self.nr_recordings = 0
