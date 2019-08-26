@@ -157,47 +157,51 @@ class DanSpeechRecognizer(object):
             else:
                 self.iterating_transcript += transcript
 
-        output = ""
         if is_last:
 
-            # If we use secondary model, pass full output through the model
-            if self.secondary_model:
-                final = torch.cat(self.spectrograms, dim=1)
-                if len(self.iterating_transcript) > 1:
-                    out, _ = self.secondary_model(final, )
+            # If something was actually detected (require at least two characters)
+            if len(self.iterating_transcript) > 1:
+
+                # If we use secondary model, pass full output through the model
+                if self.secondary_model:
+
+                    final = torch.cat(self.spectrograms, dim=1)
+
+                    # ToDo: Remove but keep for debugging now
+                    # plt.imshow(final)
+                    # plt.colorbar()
+                    # plt.show()
+                    # self.spectrograms = []
+
+                    final = final.view(1, 1, final.size(0), final.size(1))
+                    final = final.to(self.device)
+                    input_sizes = torch.IntTensor([final.size(3)]).int()
+                    out, _ = self.secondary_model(final, input_sizes)
                     decoded_out, _ = self.decoder.decode(out)
                     decoded_out = decoded_out[0][0]
 
+                    self.reset_streaming_params()
+                    return decoded_out
 
+                else:
 
-                #plt.imshow(final)
-                #plt.colorbar()
-                #plt.show()
-                #self.spectrograms = []
-
-
-            if self.lm != "greedy":
-                final_out = torch.cat(self.full_output, dim=1)
-                decoded_out, _ = self.decoder.decode(final_out)
-                decoded_out = decoded_out[0][0]
-                output = ""
-                if len(decoded_out) > 1:
-                    output = str(decoded_out[0]).upper() + decoded_out[1:] + ".\n"
-                self.full_output = []
-                self.iterating_transcript = ""
-                return output
-            else:
-                output = ""
-                if len(self.iterating_transcript) > 1:
-                    out, _ = self.second_model(final)
-                    decoded_out, _ = self.decoder.decode(out)
-                    decoded_out = decoded_out[0][0]
-                    output = decoded_out
-                    #output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
-                self.iterating_transcript = ""
-                return output
+                    # if no secondary model, check whether we need to decode it or not
+                    if self.lm != "greedy":
+                        final_out = torch.cat(self.full_output, dim=1)
+                        decoded_out, _ = self.decoder.decode(final_out)
+                        decoded_out = decoded_out[0][0]
+                        self.reset_streaming_params()
+                        return decoded_out
+                    else:
+                        self.reset_streaming_params()
+                        return self.iterating_transcript
 
         return transcript
+
+    def reset_streaming_params(self):
+        self.iterating_transcript = ""
+        self.full_output = []
+        self.spectrograms = []
 
     def transcribe(self, recording, show_all=False):
         recording = self.audio_parser.parse_audio(recording)
