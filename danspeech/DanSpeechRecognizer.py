@@ -117,12 +117,20 @@ class DanSpeechRecognizer(object):
         # Use SpecroGramAudioParser
         self.audio_parser = InferenceSpectrogramAudioParser(audio_config=self.audio_config)
 
-    def disable_streaming(self):
+    def disable_streaming(self, keep_secondary_model=False):
         self.streaming = False
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
+        self.reset_streaming_params()
+
+        if not keep_secondary_model:
+            self.secondary_model = None
+
+
+    def reset_streaming_params(self):
         self.iterating_transcript = ""
         self.full_output = []
         self.spectrograms = []
+
 
     def streaming_transcribe(self, recording, is_last, is_first):
         recording = self.audio_parser.parse_audio(recording, is_last)
@@ -196,11 +204,6 @@ class DanSpeechRecognizer(object):
                         return self.iterating_transcript
 
         return transcript
-
-    def reset_streaming_params(self):
-        self.iterating_transcript = ""
-        self.full_output = []
-        self.spectrograms = []
 
     def transcribe(self, recording, show_all=False):
         recording = self.audio_parser.parse_audio(recording)
