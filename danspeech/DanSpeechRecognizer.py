@@ -4,6 +4,7 @@ from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized
 from danspeech.audio.parsers import SpectrogramAudioParser, InferenceSpectrogramAudioParser
 
+
 class DanSpeechRecognizer(object):
 
     def __init__(self, model_name=None, lm_name=None,
@@ -11,7 +12,7 @@ class DanSpeechRecognizer(object):
                  beam_width=64):
 
         self.device = torch.device("cuda" if with_gpu else "cpu")
-        print(self.device)
+        print("Using device: {0}".format(self.device))
 
         # Init model if given
         if model_name:
@@ -39,32 +40,15 @@ class DanSpeechRecognizer(object):
             self.lm = None
             self.decoder = None
 
-        # Streaming declarations
-        self.streaming = False
-        self.full_output = []
-        self.iterating_transcript = ""
-        """
-        self.second_model = DanSpeechPrimary()
-        self.audio_config = self.second_model.audio_conf
-        self.second_model =  self.second_model.to(self.device)
-        self.second_model.eval()
-
-        self.second_decoder = DSL3gram()
-
-        # When updating model, always update decoder because of labels
-        self.second_decoder = decoder = BeamCTCDecoder(labels=self.second_model.labels, lm_path=self.second_decoder,
-                                      alpha=self.alpha, beta=self.beta,
-                                      beam_width=self.beam_width, num_processes=6, cutoff_prob=1.0,
-                                      cutoff_top_n=40, blank_index=self.labels.index('_'))
-        """
     def update_model(self, model):
         self.audio_config = model.audio_conf
         self.model = model.to(self.device)
         self.model.eval()
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
 
+        self.labels = self.model.labels
         # When updating model, always update decoder because of labels
-        self.update_decoder(labels=self.model.labels)
+        self.update_decoder(labels=self.labels)
 
     def update_decoder(self, lm=None, alpha=None, beta=None, labels=None, beam_width=None):
 
@@ -105,36 +89,75 @@ class DanSpeechRecognizer(object):
             else:
                 self.decoder = GreedyDecoder(labels=self.labels, blank_index=self.labels.index('_'))
 
-    def enable_streaming(self):
-        self.streaming = True
+
+    def enable_streaming(self, secondary_model=None, return_string_parts=True):
+        """
+        Enables the DanSpeech system to perform speech recognition on a stream of audio data.
+
+        :param secondary_model: A DanSpeech to perform speech recognition when a buffer of audio data has been build,
+        hence this model can be given to provide better final transcriptions. If None, then the system will use the
+        streaming model for the final output.
+        """
+        # Streaming declarations
+        self.full_output = []
+        self.iterating_transcript = ""
+        if secondary_model:
+            self.secondary_model = secondary_model.to(self.device)
+            self.secondary_model.eval()
+        else:
+            self.secondary_model = None
+
+        self.spectrograms = []
+
+        # This is needed for streaming decoding
         self.greedy_decoder = GreedyDecoder(labels=self.labels, blank_index=self.labels.index('_'))
+
+        # Use SpecroGramAudioParser
         self.audio_parser = InferenceSpectrogramAudioParser(audio_config=self.audio_config)
 
-    def disable_streaming(self):
-        self.streaming = False
+        if return_string_parts:
+            self.string_parts = True
+        else:
+            self.string_parts = False
+
+    def disable_streaming(self, keep_secondary_model=False):
         self.audio_parser = SpectrogramAudioParser(self.audio_config)
+        self.greedy_decoder = None
+        self.reset_streaming_params()
+        self.string_parts = False
+
+        if not keep_secondary_model:
+            self.secondary_model = None
+
+
+    def reset_streaming_params(self):
         self.iterating_transcript = ""
         self.full_output = []
         self.spectrograms = []
 
+
     def streaming_transcribe(self, recording, is_last, is_first):
         recording = self.audio_parser.parse_audio(recording, is_last)
-
-        transcript = ""
+        out = ""
+        # This can happen if it is the last part of a recording and there is too little samples
+        # to generate a spectrogram
         if len(recording) != 0:
-            # ToDO: Remove but keep here for now
-            self.spectrograms.append(recording)
+            if self.secondary_model:
+                self.spectrograms.append(recording)
+
             # Convert recording to batch for model purpose
             recording = recording.view(1, 1, recording.size(0), recording.size(1))
+            recording = recording.to(self.device)
 
-            recording.to(self.device)
             out = self.model(recording, is_first, is_last)
 
-            # First pass returns None, as we need more context for first prediction
+            # First pass returns None, as we need more context to perform the first prediction
             if is_first:
                 return ""
 
             self.full_output.append(out)
+
+            # Decode the output with greedy decoding
             decoded_out, _ = self.greedy_decoder.decode(out)
             transcript = decoded_out[0][0]
 
@@ -145,35 +168,47 @@ class DanSpeechRecognizer(object):
             else:
                 self.iterating_transcript += transcript
 
-        if is_last:
-            # ToDO: Remove but keep here for now
-            final = torch.cat(self.spectrograms, dim=1)
-            #plt.imshow(final)
-            #plt.colorbar()
-            #plt.show()
-            #self.spectrograms = []
-            if self.lm != "greedy":
-                final_out = torch.cat(self.full_output, dim=1)
-                decoded_out, _ = self.decoder.decode(final_out)
-                decoded_out = decoded_out[0][0]
-                output = ""
-                if len(decoded_out) > 1:
-                    output = str(decoded_out[0]).upper() + decoded_out[1:] + ".\n"
-                self.full_output = []
-                self.iterating_transcript = ""
-                return output
+            if self.string_parts:
+                out = transcript
             else:
-                output = ""
-                if len(self.iterating_transcript) > 1:
-                    #out, _ = self.second_model(final)
-                    #decoded_out, _ = self.decoder.decode(out)
-                    #decoded_out = decoded_out[0][0]
-                    #output = decoded_out
-                    output = str(self.iterating_transcript[0]).upper() + self.iterating_transcript[1:] + ".\n"
-                self.iterating_transcript = ""
-                return output
+                out = self.iterating_transcript
 
-        return transcript
+        if is_last:
+            # If something was actually detected (require at least two characters)
+            if len(self.iterating_transcript) > 1:
+
+                # If we use secondary model, pass full output through the model
+                if self.secondary_model:
+
+                    final = torch.cat(self.spectrograms, dim=1)
+                    self.spectrograms = []
+
+                    final = final.view(1, 1, final.size(0), final.size(1))
+                    final = final.to(self.device)
+                    input_sizes = torch.IntTensor([final.size(3)]).int()
+                    out, _ = self.secondary_model(final, input_sizes)
+                    decoded_out, _ = self.decoder.decode(out)
+                    decoded_out = decoded_out[0][0]
+
+                    self.reset_streaming_params()
+                    return decoded_out
+
+                else:
+                    # if no secondary model, check whether we need to decode with LM or not
+                    if self.lm != "greedy":
+                        final_out = torch.cat(self.full_output, dim=1)
+                        decoded_out, _ = self.decoder.decode(final_out)
+                        decoded_out = decoded_out[0][0]
+                        self.reset_streaming_params()
+                        return decoded_out
+                    else:
+                        out = self.iterating_transcript
+                        self.reset_streaming_params()
+                        return out
+            else:
+                return ""
+
+        return out
 
     def transcribe(self, recording, show_all=False):
         recording = self.audio_parser.parse_audio(recording)

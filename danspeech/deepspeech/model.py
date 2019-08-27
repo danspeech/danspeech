@@ -335,6 +335,7 @@ class DeepSpeech(nn.Module):
         self.bidirectional = bidirectional
         self.conv_layers = conv_layers
         self.streaming_model = streaming_inference_model
+        self.context = context
 
         sample_rate = self.audio_conf.get("sampling_rate", 16000)
         window_size = self.audio_conf.get("window_size", 0.02)
