@@ -13,3 +13,9 @@ class UnknownValueError(Exception):
 class ModelNotInitialized(Exception):
     pass
 
+
+class WrongUsageOfListen(Exception):
+    pass
+
+class NoDataInBuffer(Exception):
+    pass
