@@ -31,6 +31,9 @@ class Recognizer(object):
         # seconds of non-speaking audio to keep on both sides of the recording
         self.non_speaking_duration = 0.35
 
+        # Seconds before we consider a clip and actual clip
+        self.mininum_required_speaking_seconds = 0.7
+
         # Adjust energy params
         self.dynamic_energy_threshold = True
         self.dynamic_energy_adjustment_damping = 0.15
@@ -81,7 +84,7 @@ class Recognizer(object):
         :return: None
         """
         self.danspeech_recognizer.update_decoder(lm=lm, alpha=alpha, beta=beta, beam_width=beam_width)
-        print("DanSpeech decoder updated ") #ToDO: Include model name
+        print("DanSpeech decoder updated ")  # ToDO: Include model name
 
     def update_stream_parameters(self, energy_threshold=None, pause_threshold=None,
                                  phrase_threshold=None, non_speaing_duration=None):
@@ -170,11 +173,11 @@ class Recognizer(object):
             # check how long the detected phrase is, and retry listening if the phrase is too short
             phrase_count -= pause_count  # exclude the buffers for the pause before the phrase
             if phrase_count >= phrase_buffer_count or len(
-                buffer) == 0: break  # phrase is long enough or we've reached the end of the stream, so stop listening
+                    buffer) == 0: break  # phrase is long enough or we've reached the end of the stream, so stop listening
 
         # obtain frame data
         for i in range(
-            pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
+                pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
         frame_data = b"".join(frames)
 
         return AudioData(frame_data, source.sampling_rate, source.sampling_width)
@@ -246,7 +249,6 @@ class Recognizer(object):
             phrase_start_time = elapsed_time
             while True:
 
-
                 buffer = source.stream.read(source.chunk)
                 if len(buffer) == 0:
                     break  # reached end of the stream
@@ -299,7 +301,9 @@ class Recognizer(object):
         :return: None
         """
         assert isinstance(source, SpeechSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
+        assert source.stream is not None, "Audio source must be entered before adjusting, " \
+                                          "see documentation for ``AudioSource``; are you using " \
+                                          "``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
         seconds_per_buffer = (source.chunk + 0.0) / source.sampling_rate
@@ -318,6 +322,46 @@ class Recognizer(object):
             damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
+
+    def adjust_for_speech(self, source, duration=2):
+        """
+        Adjusts the energy level threshold for detecting speech by listening to speech.
+
+        Remember to talk!
+
+        Only use if the default energy level does not match your use case.
+
+        :param source: Source of audio. Needs to be a Danspeech.audio.resources.SpeechSource instance
+        :param duration: Maximum duration of adjusting the energy threshold
+        :return: None
+        """
+        assert isinstance(source, SpeechSource), "Source must be an audio source"
+        assert source.stream is not None, "Audio source must be entered before adjusting, " \
+                                          "see documentation for ``AudioSource``; are you using ``source``" \
+                                          " outside of a ``with`` statement?"
+        assert self.pause_threshold >= self.non_speaking_duration >= 0
+
+        seconds_per_buffer = (source.chunk + 0.0) / source.sampling_rate
+        elapsed_time = 0
+
+        energy_levels = []
+        # adjust energy threshold until a phrase starts
+        while True:
+            elapsed_time += seconds_per_buffer
+            if elapsed_time > duration:
+                break
+
+            buffer = source.stream.read(source.chunk)
+            energy = audioop.rms(buffer, source.sampling_width)  # energy of the audio signal
+            energy_levels.append(energy)
+
+        energy_average = sum(energy_levels) / len(energy_levels)
+
+        # Subtract some ekstra energy, since we take average
+        if energy_average > 80:
+            self.energy_threshold = energy_average - 80
+        else:
+            self.energy_threshold = energy_average
 
 
     @staticmethod
@@ -404,8 +448,8 @@ class Recognizer(object):
         """
         if self.stream:
             print("Stopping microphone stream...")
-            self.stream_thread_stopper(wait_for_stop=False)
             self.stream = False
+            self.stream_thread_stopper(wait_for_stop=False)
             self.danspeech_recognizer.disable_streaming(keep_secondary_model=keep_secondary_model_loaded)
         else:
             print("No stream is running for the Recognizer")
@@ -474,7 +518,7 @@ class Recognizer(object):
                         is_last, temp = data_getter()
                         data_array = np.concatenate((data_array, temp))
                         data_success = True
-                # If this exception is thrown, then we have all available data
+                # If this exception is thrown, then we have no available data
                 except NoDataInBuffer:
                     # If it is first data and no data in buffer, then do not break but sleep.
 
@@ -547,6 +591,65 @@ class Recognizer(object):
                 is_first_pass = True
                 is_last = False
                 output = None
+
+    def enable_streaming(self):
+        if self.stream:
+            print("Streaming already enabled...")
+        else:
+            self.stream = True
+
+    def stop_streaming(self):
+        if self.stream:
+            self.stream = False
+            self.stream_thread_stopper(wait_for_stop=False)
+        else:
+            self.stream = True
+
+    def streaming(self, source):
+        """
+        Generator class for a stream audio source e.g. a Microphone
+
+        Spawns a background thread and uses the loaded model to transcribe
+
+        :param source:
+        :return:
+        """
+        stopper, data_getter = self.listen_in_background(source)
+        self.stream_thread_stopper = stopper
+
+        is_last = False
+        is_first_data = False
+        data_array = []
+
+        while self.stream:
+            # Loop for data (gets all the available data from the stream)
+            while True:
+
+                # If it is the last one in a stream, break and perform recognition no matter what
+                if is_last:
+                    is_first_data = True
+                    break
+
+                # Get all available data
+                try:
+                    if is_first_data:
+                        is_last, data_array = data_getter()
+                        is_first_data = False
+                    else:
+                        is_last, temp = data_getter()
+                        data_array = np.concatenate((data_array, temp))
+                # If this exception is thrown, then we no available data
+                except NoDataInBuffer:
+                    # If no data in buffer, we sleep and wait
+                    time.sleep(0.2)
+
+            # Since we only break out of data loop, if we need a prediction, the following works
+            # We only do a prediction of the length of gathered audio is above a threshold
+            if len(data_array) > self.mininum_required_speaking_seconds * source.sampling_rate:
+                yield self.recognize(data_array)
+
+            is_last = False
+            data_array = []
 
     def recognize(self, audio_data, show_all=False):
         """
