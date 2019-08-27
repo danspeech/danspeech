@@ -19,7 +19,7 @@
   <script>
     // Current page data
     var mkdocs_page_name = "Installation";
-    var mkdocs_page_input_path = "installation.md";
+    var mkdocs_page_input_path = "installing.md";
     var mkdocs_page_url = null;
   </script>
   
@@ -56,7 +56,7 @@
           
             <li class="toctree-l1 current">
 		
-    <a class="current" href="installation.html">Installation</a>
+    <a class="current" href="installing.html">Installation</a>
     <ul class="subnav">
             
     <li class="toctree-l2"><a href="#danspeech-installation">DanSpeech Installation</a></li>
@@ -68,6 +68,21 @@
             <li class="toctree-l1">
 		
     <a class="" href="usage.html">Usage</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="recognizer.html">Recognizer</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="models.html">Pre-trained DS models</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="lms.html">Pre-trained language models</a>
 	    </li>
           
         </ul>
@@ -104,10 +119,11 @@
               
                 <h1 id="danspeech-installation">DanSpeech Installation</h1>
 <p>Currently DanSpeech is installed by</p>
-<pre><code>$ git clone https://github.com/Rasmusafj/danspeech
-$ cd danspeech
+<div class="codehilite"><pre><span></span>$ git clone https://github.com/Rasmusafj/danspeech
+$ <span class="nb">cd</span> danspeech
 $ pip install . -r requirements.txt
-</code></pre>
+</pre></div>
+
 
 <p>DanSpeech requires python 3.5+</p>
               

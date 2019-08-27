@@ -7,12 +7,16 @@ markdown_extensions:
 - mdx_math:
     enable_dollar_delimiter: True #for use of inline $..$
 - admonition
-
+- codehilite
 extra_javascript: ['https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML']
 extra_css: [extra.css]
 
 
 nav:
   - Home: index.md
-  - Installation: installation.md
+  - Installation: installing.md
   - Usage: usage.md
+  - Recognizer: recognizer.md
+  - Audio Sources: audio.md
+  - Pre-trained models: models.md
+  - Pre-trained language models: lms.md

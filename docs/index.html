@@ -60,6 +60,14 @@
         
             <li><a class="toctree-l3" href="#what-is-danspeech">What is DanSpeech?</a></li>
         
+            <li><a class="toctree-l3" href="#motivation">Motivation</a></li>
+        
+            <li><a class="toctree-l3" href="#performance">Performance</a></li>
+        
+            <li><a class="toctree-l3" href="#danspeech-training-repository">DanSpeech training repository</a></li>
+        
+            <li><a class="toctree-l3" href="#danspeech-demo">DanSpeech Demo</a></li>
+        
         </ul>
     
 
@@ -68,12 +76,27 @@
           
             <li class="toctree-l1">
 		
-    <a class="" href="installation.html">Installation</a>
+    <a class="" href="installing.html">Installation</a>
 	    </li>
           
             <li class="toctree-l1">
 		
     <a class="" href="usage.html">Usage</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="recognizer.html">Recognizer</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="models.html">Pre-trained DS models</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="lms.html">Pre-trained language models</a>
 	    </li>
           
         </ul>
@@ -110,7 +133,67 @@
               
                 <h1 id="danspeech-documentation">DanSpeech Documentation</h1>
 <h2 id="what-is-danspeech">What is DanSpeech?</h2>
-<p>DanSpeech is an open-source Danish speech recogniziation system which can be used for various applications.</p>
+<p>DanSpeech is an open-source Danish speech recognition (speech-to-text) python package based on the 
+<a href="https://pytorch.org/">PyTorch</a> deep learning framework. It was developed as part of a Master's thesis at DTU 
+by Martin Carsten Nielsen and Rasmus Arpe Figh Jensen with supervisor Professor Lars Kai. </p>
+<p>All of the DanSpeech models are end-to-end <a href="https://arxiv.org/abs/1512.02595">DeepSpeech 2</a> models trained on danish
+text with various data agumentations as an attempt multiply the rather small and public speech recognition 
+data available in Danish. The models perform state-of-the-art speech recognition in Danish but performance is
+ evidently not perfect and conditioned on specific use-cases.</p>
+<p>Danspeech contains:
+* An easy-to-use Recognizer that supports different use-cases for Danish speech recognition.
+* Pre-trained models.
+* Pre-trained language models.</p>
+<h2 id="motivation">Motivation</h2>
+<p>We believe that speech recognition in Danish should be available for anyone. We therefore developed
+an open-source and easy-to-use speech recognition system for Danish. </p>
+<p>An open-source speech recognition system is important to ensure that Danish speech recognition performance 
+will not continue to fall miles behind the performance of English systems. Speech recognition will inevitable
+be a big part of future IT innovations. Without an easy-to-use and free system, innovation in Danish technologies 
+utilization speech recognition is hindered.</p>
+<p>The system can be used freely commercially used for companies without the resources to develop their own speech recognition 
+systems or companies who do not wish to outsource speech recognition.</p>
+<p>The system can also be used as part of education at various universities in Denmark.</p>
+<h2 id="performance">Performance</h2>
+<p>We benchmarked the system on two Danish benchmarks, namely the public available <a href="https://www.nb.no/sprakbanken/show?serial=oai%3Anb.no%3Asbr-19&amp;lang=en">Nordisk Språkteknologi</a>
+(NST) dataset and our own (not public due to data gathering restrictions and GDPR) DanSpeech dataset (~1000 noisy recordings).
+The performance is evaulated in <a href="https://en.wikipedia.org/wiki/Word_error_rate">word error rate</a> (WER)</p>
+<table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>Models</th>
+<th>Performance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NST test</td>
+<td>DanSpeechPrimary + DSL5Gram (not pruned) LM</td>
+<td>12.85% WER</td>
+</tr>
+<tr>
+<td>DanSpeech dataset</td>
+<td>TransferLearned + DSL5Gram (not pruned) LM</td>
+<td>25.75% WER</td>
+</tr>
+</tbody>
+</table>
+<p>If you know the specific domain which you wish to apply Danish speech recognition to, and you have either text resources 
+or in the best case speech data available, then you can finetune DanSpeech models to achieve a much better performance for your
+specific domain than the performance DanSpeech pre-trained models are capable of.</p>
+<p>See <a href="#danspeech-training-repository">DanSpeech training repository</a> and <a href="#danspeech-demo">DanSpeech Demo</a>. </p>
+<h2 id="danspeech-training-repository">DanSpeech training repository</h2>
+<p>If you wish to train your own speech recognition models, or finetune DanSpeech models to your specific
+domain/use-case, then use the DanSpeech training repository. This requires technical expertise and a GPU. </p>
+<p>As mentioned above, you can finetune DanSpeech models to achieve a much better performance for your
+specific domain than the performance DanSpeech pre-trained models are capable of.</p>
+<h2 id="danspeech-demo">DanSpeech Demo</h2>
+<p>To test the DanSpeech models on your own audio files or on your own speech, we additionally created a demo 
+that runs as a development django server on localhost. It is easy to install and hence easy to test the models
+with a GUI (little technical knowledge is required to play around with the demo).</p>
+<p>The demo also features the finetuned Folketinget DanSpeech model with the finetuned Folketinget language model
+transcribing a Danish Parliament meeting, which the model was not trained on.</p>
               
             </div>
           </div>
@@ -118,7 +201,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="installation.html" class="btn btn-neutral float-right" title="Installation">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="installing.html" class="btn btn-neutral float-right" title="Installation">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
     </div>
@@ -146,7 +229,7 @@
       
       
       
-        <span style="margin-left: 15px"><a href="installation.html" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="installing.html" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
@@ -160,5 +243,5 @@
 
 <!--
 MkDocs version : 1.0.4
-Build Date UTC : 2019-07-16 10:45:56
+Build Date UTC : 2019-08-27 12:07:30
 -->

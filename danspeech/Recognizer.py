@@ -11,15 +11,17 @@ import numpy as np
 
 
 class Recognizer(object):
-
+    """
+    Creates a new Recognizer instance, which represents a collection of speech recognition functionality.
+    """
     def __init__(self, model=None, lm=None, **kwargs):
         """
-        Creates a new ``Recognizer`` instance, whi  ch represents a collection of speech recognition functionality.
 
-        lm_name requires model_name.
-        alpha and beta requires lm
-
+        :param model: DanSpeech model
+        :param lm: Language model
+        :param with_gpu: Boolean indicating whether DanSpeech models should be loaded for gpu
         """
+
         # minimum audio energy to consider for recording
         self.energy_threshold = 1000
 
@@ -83,6 +85,20 @@ class Recognizer(object):
         """
         self.danspeech_recognizer.update_decoder(lm=lm, alpha=alpha, beta=beta, beam_width=beam_width)
         print("DanSpeech decoder updated ") #ToDO: Include model name
+
+
+    def recognize(self, audio_data, show_all=False):
+        """
+        Performs speech recognition with the current initialized model.
+
+        :param audio_data: Numpy array of audio data
+        :param show_all: Whether to return all beams for beam search, if the beam search is enabled.
+        :return: Returns the most likely transcription if show_all is false (the default). Otherwise, returns the
+        most likely beams from beam search with a language model
+        """
+
+        return self.danspeech_recognizer.transcribe(audio_data, show_all=show_all)
+
 
     def listen(self, source, timeout=None, phrase_time_limit=None):
         """
@@ -502,14 +518,3 @@ class Recognizer(object):
                 is_first = True
                 data_array = None
 
-    def recognize(self, audio_data, show_all=False):
-        """
-        Performs speech recognition with the current initialized model.
-
-        :param audio_data: Numpy array of audio data
-        :param show_all: Whether to return all beams for beam search, if the beam search is enabled.
-        :return: Returns the most likely transcription if show_all is false (the default). Otherwise, returns the
-        most likely beams from beam search with a language model
-        """
-
-        return self.danspeech_recognizer.transcribe(audio_data, show_all=show_all)

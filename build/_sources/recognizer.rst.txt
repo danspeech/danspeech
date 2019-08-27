@@ -1,0 +1,6 @@
+==========
+Recognizer
+==========
+
+.. autoclass:: danspeech.Recognizer
+    :members:

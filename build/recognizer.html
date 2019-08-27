@@ -1,0 +1,448 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Recognizer &mdash; DanSpeech 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Pre-trained DanSpeech Models" href="models.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> DanSpeech
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="danspeech.html">What is DanSpeech?</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Quick-start</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Recognizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Pre-trained DanSpeech Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lms.html">Pre-trained Language Models</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p class="caption"><span class="caption-text">DanSpeech Demo</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="demo.html">Demo</a></li>
+</ul>
+<p class="caption"><span class="caption-text">DanSpeech Training Repository</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="train.html">DanSpeech training repository</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Appendix</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix.html">What is awdawdawd?</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DanSpeech</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Recognizer</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/recognizer.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="recognizer">
+<h1>Recognizer<a class="headerlink" href="#recognizer" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="danspeech.Recognizer">
+<em class="property">class </em><code class="sig-prename descclassname">danspeech.</code><code class="sig-name descname">Recognizer</code><span class="sig-paren">(</span><em class="sig-param">model=None</em>, <em class="sig-param">lm=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recognizer Class, which represents a collection of speech recognition functionality.</p>
+<dl class="method">
+<dt id="danspeech.Recognizer.adjust_for_ambient_noise">
+<code class="sig-name descname">adjust_for_ambient_noise</code><span class="sig-paren">(</span><em class="sig-param">source</em>, <em class="sig-param">duration=2</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.adjust_for_ambient_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Source: <a class="reference external" href="https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py">https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py</a>
+Modified for DanSpeech</p>
+<p>Only use if the default energy level does not match your use case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> – Source of audio. Needs to be a Danspeech.audio.resources.SpeechSource instance</p></li>
+<li><p><strong>duration</strong> – Maximum duration of adjusting the energy threshold</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.adjust_for_speech">
+<code class="sig-name descname">adjust_for_speech</code><span class="sig-paren">(</span><em class="sig-param">source</em>, <em class="sig-param">duration=2</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.adjust_for_speech" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjusts the energy level threshold for detecting speech by listening to speech.</p>
+<p>Remember to talk!</p>
+<p>Only use if the default energy level does not match your use case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> – Source of audio. Needs to be a Danspeech.audio.resources.SpeechSource instance</p></li>
+<li><p><strong>duration</strong> – Maximum duration of adjusting the energy threshold</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.enable_real_time_streaming">
+<code class="sig-name descname">enable_real_time_streaming</code><span class="sig-paren">(</span><em class="sig-param">streaming_model</em>, <em class="sig-param">secondary_model=None</em>, <em class="sig-param">string_parts=True</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.enable_real_time_streaming" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> – Source of audio</p></li>
+<li><p><strong>streaming_model</strong> – The DanSpeech model to perform streaming. This model needs to be uni-directional.</p></li>
+</ul>
+</dd>
+</dl>
+<p>This is required for streaming to work. The two available DanSpeech models are CPUStreamingRNN and
+GPUStreamingRNN but you may create a custom streaming model as well.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.get_audio_data">
+<em class="property">static </em><code class="sig-name descname">get_audio_data</code><span class="sig-paren">(</span><em class="sig-param">frames</em>, <em class="sig-param">source</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.get_audio_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to convert the frames (bytes) from a stream to an array used for DanSpeech models</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> – Byte frames</p></li>
+<li><p><strong>source</strong> – Source of stream/frames</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Numpy array with speech data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.listen">
+<code class="sig-name descname">listen</code><span class="sig-paren">(</span><em class="sig-param">source</em>, <em class="sig-param">timeout=None</em>, <em class="sig-param">phrase_time_limit=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.listen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Source: <a class="reference external" href="https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py">https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py</a>
+Modified for DanSpeech.</p>
+<p>Listens to a stream of audio.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.listen_in_background">
+<code class="sig-name descname">listen_in_background</code><span class="sig-paren">(</span><em class="sig-param">source</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.listen_in_background" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spawns a thread which listens to the source of data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> – Source of stream/frames</p></li>
+<li><p><strong>first_required_frames</strong> – Required frames before yielding data for the first pass to the streaming model</p></li>
+<li><p><strong>general_required_frames</strong> – Minimum required frames for passes after the first pass of the streaming model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Stopper function used to stop the thread, and a data_getter which returns data from the thread</p>
+</dd>
+</dl>
+<p>according current steps.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.listen_stream">
+<code class="sig-name descname">listen_stream</code><span class="sig-paren">(</span><em class="sig-param">source</em>, <em class="sig-param">timeout=None</em>, <em class="sig-param">phrase_time_limit=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.listen_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adapted from: <a class="reference external" href="https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py">https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py</a></p>
+<p>Generator used to listen to the audio from a source e.g. a microphone. This generator is used
+by the streaming models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> – Source of audio. Needs to be a Danspeech.audio.resources.SpeechSource instance</p></li>
+<li><p><strong>frames_first</strong> – Required frames before yielding data for the first pass to the streaming model</p></li>
+<li><p><strong>frames_rest</strong> – Minimum required frames for passes after the first pass of the streaming model.</p></li>
+<li><p><strong>timeout</strong> – Maximum number of seconds that this will wait until a phrase starts</p></li>
+<li><p><strong>phrase_time_limit</strong> – Maxumum number of seconds to that will allow a phrase to continue before stopping</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Data and an indicator whether it is the last part of a streaming part</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.real_time_streaming">
+<code class="sig-name descname">real_time_streaming</code><span class="sig-paren">(</span><em class="sig-param">source</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.real_time_streaming" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator class to handle a stream from the source of audio, most likely a microphone.</p>
+<p>This method assumes that you use a model with default spectrogram/audio parameters i.e. 20ms audio for each
+stft and 50% overlap.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Boolean to indicated if it is ending of an utterance and the transcribed output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.recognize">
+<code class="sig-name descname">recognize</code><span class="sig-paren">(</span><em class="sig-param">audio_data</em>, <em class="sig-param">show_all=False</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.recognize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs speech recognition with the current initialized model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>audio_data</strong> – Numpy array of audio data</p></li>
+<li><p><strong>show_all</strong> – Whether to return all beams for beam search, if the beam search is enabled.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns the most likely transcription if show_all is false (the default). Otherwise, returns the</p>
+</dd>
+</dl>
+<p>most likely beams from beam search with a language model</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.stop_real_time_streaming">
+<code class="sig-name descname">stop_real_time_streaming</code><span class="sig-paren">(</span><em class="sig-param">keep_secondary_model_loaded=False</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.stop_real_time_streaming" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to stop microphone streaming.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.streaming">
+<code class="sig-name descname">streaming</code><span class="sig-paren">(</span><em class="sig-param">source</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.streaming" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator class for a stream audio source e.g. a Microphone</p>
+<p>Spawns a background thread and uses the loaded model to transcribe</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>source</strong> – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.update_decoder">
+<code class="sig-name descname">update_decoder</code><span class="sig-paren">(</span><em class="sig-param">lm=None</em>, <em class="sig-param">alpha=None</em>, <em class="sig-param">beta=None</em>, <em class="sig-param">beam_width=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.update_decoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the decoder being used by the Recognizer.</p>
+<p>If lm is None or “greedy”, then the decoding will be performed by greedy decoding, and the alpha, beta and
+beam width parameters are therefore ignored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lm</strong> – DanSpeech Language model (see DanSpeech.language_models)</p></li>
+<li><p><strong>alpha</strong> – Alpha parameter of beam search decoding. If None, then the decoder will use existing parameter</p></li>
+</ul>
+</dd>
+</dl>
+<p>in DanSpeechRecognizer.
+:param beta: Beta parameter of beam search decoding. If None, then the decoder will use existing parameter
+in DanSpeechRecognizer.
+:param beam_width: Beam width of beam search decoding. If None, then the decoder will use existing parameter
+in DanSpeechRecognizer.
+:return: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="danspeech.Recognizer.update_model">
+<code class="sig-name descname">update_model</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.Recognizer.update_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the model being used by the Recognizer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> – DanSpeech model (see DanSpeech.pretrained_models)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="models.html" class="btn btn-neutral float-right" title="Pre-trained DanSpeech Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Martin Carsten Nielsen, Rasmus Arpe Fogh Jensen
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(false);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
