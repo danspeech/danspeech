@@ -14,6 +14,7 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 # Modified to support pytorch Tensors
+# Source: https://github.com/SeanNaren/deepspeech.pytorch
 
 import Levenshtein as Lev
 import torch
