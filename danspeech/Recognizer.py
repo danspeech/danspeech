@@ -644,7 +644,7 @@ class Recognizer(object):
                     time.sleep(0.2)
 
             # Since we only break out of data loop, if we need a prediction, the following works
-            # We only do a prediction of the length of gathered audio is above a threshold
+            # We only do a prediction if the length of gathered audio is above a threshold
             if len(data_array) > self.mininum_required_speaking_seconds * source.sampling_rate:
                 yield self.recognize(data_array)
 
