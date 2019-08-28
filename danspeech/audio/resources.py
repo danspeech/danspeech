@@ -19,35 +19,18 @@ class SamplingRateWarning(Warning):
     pass
 
 
-def load_audio_wavPCM(path):
-    """
-    Fast load of wav. This works well if you are certain that your wav files are PCM encoded.
-
-    :param path: Path to wave file
-    :return: Array of data ready for recognition.
-    """
-    _, sound = wav.read(path)
-
-    if len(sound.shape) > 1:
-        if sound.shape[1] == 1:
-            sound = sound.squeeze()
-        else:
-            sound = sound.mean(axis=1)  # multiple channels, average
-
-    return sound.astype(float)
-
-
 def load_audio(path, duration=None, offset=None):
     """
     Loads a sound file.
 
     Supported formats are WAV, AIFF, FLAC.
 
-    :param path: Path to sound file
-    :param duration: Duration of how much to use. If duration is not specified,
-    then it will record until there is no more audio input.
-    :param offset: Where to start in the clip
-    :return: array ready for speech recognition
+    :param str path: Path to sound file
+    :param float duration: Duration in seconds of how much to use. If duration is not specified,
+        then it will record until there is no more audio input.
+    :param float offset: Where to start in seconds in the clip.
+    :return: Input array ready for speech recognition.
+    :rtype: ``numpy.array``
     """
 
     with SpeechFile(filepath=path) as source:
@@ -76,6 +59,27 @@ def load_audio(path, duration=None, offset=None):
         frame_data = frames_bytes.getvalue()
         frames_bytes.close()
         return AudioData(frame_data, source.sampling_rate, source.sampling_width).get_array_data()
+
+
+def load_audio_wavPCM(path):
+    """
+    Fast load of wav.
+
+    This works well if you are certain that your wav files are PCM encoded.
+
+    :param str path: Path to wave file.
+    :return: Input array ready for speech recognition.
+    :rtype: ``numpy.array``
+    """
+    _, sound = wav.read(path)
+
+    if len(sound.shape) > 1:
+        if sound.shape[1] == 1:
+            sound = sound.squeeze()
+        else:
+            sound = sound.mean(axis=1)  # multiple channels, average
+
+    return sound.astype(float)
 
 
 def shutil_which(pgm):
@@ -323,19 +327,62 @@ class Microphone(SpeechSource):
 
     Modified for DanSpeech
 
-    Creates a Microphone instance, which represents the a microphone on the computer.
+    **Warning:** Requires PyAudio.
 
-    Requires PyAudio!
+    Creates a Microphone instance, which represents the a microphone on the computer.
 
     The microphone needs a device index, or else it will try to use the default microphone of the system.
 
     Sampling rate should always be 16000, if the microphone should work with DanSpeech models.
 
-    Avoid changing chunk size unless it is strictly neccessary. WARNING: Will possibly break microphone
-    streaming with DanSpeech models.
+    :param int device_index: The device index of your microphone. Use :meth:`Microphone.list_microphone_names` to
+        find the available input sources and choose the appropriate one.
+    :param int sampling_rate: Should always be 16000 unless you configured audio configuration of a
+        your own trained danspeech model.
+    :param int chunk_size: Avoid changing chunk size unless it is strictly neccessary.
+        WARNING: Will possibly break microphone streaming with DanSpeech models.
+
+    :Example:
+
+         .. code-block:: python
+
+            from danspeech import Recognizer {}
+            from danspeech.pretrained_models import TestModel
+            from danspeech.audio.resources import Microphone
+
+            # Get a list of microphones found by PyAudio
+            mic_list = Microphone.list_microphone_names()
+            mic_list_with_numbers = list(zip(range(len(mic_list)), mic_list))
+            print("Available microphones: {0}".format(mic_list_with_numbers))
+
+            # Choose the microphone
+            mic_number = input("Pick the number of the microphone you would like to use: ")
+
+            # Init a microphone object
+            m = Microphone(sampling_rate=16000, device_index=int(mic_number))
+
+            # Init a DanSpeech model and create a Recognizer instance
+            model = TestModel()
+            recognizer = Recognizer(model=model)
+
+            print("Speek a lot to adjust silence detection from microphone...")
+            with m as source:
+                recognizer.adjust_for_speech(source, duration=5)
+
+            # Enable streaming
+            recognizer.enable_streaming()
+
+            # Create the streaming generator which runs a background thread listening to the microphone stream
+            generator = recognizer.streaming(source=m)
+
+            # The below code runs for a long time. The generator returns transcriptions of spoken speech from your microphone.
+            print("Speak")
+            for i in range(100000):
+                trans = next(generator)
+                print(trans)
     """
 
-    def __init__(self, device_index=None, sampling_rate=None, chunk_size=1024):
+    def __init__(self, device_index=None, sampling_rate=16000, chunk_size=1024):
         assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
         assert sampling_rate is None or (
                 isinstance(sampling_rate, int) and sampling_rate > 0), "Sample rate must be None or a positive integer"
@@ -379,63 +426,25 @@ class Microphone(SpeechSource):
         """
         Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
 
-        Returns a list of the names of all available microphones.
+        Find all available input sources.
+
         The index of each microphone's name in the returned list is the same as its device index when creating
         a Microphone instance - if you want to use the microphone at index 3
-        in the returned list, use Microphone(device_index=3).
+        in the returned list, use ``Microphone(device_index=3)``.
+
+        **Warning:** Will also show sources that are not actually microphones, which will result in an error. Try
+        another one, that sounds plausible.
+
+        :return: A list of the names of all available microphones.
+        :rtype: list
         """
+
         audio = get_pyaudio().PyAudio()
         try:
             result = []
             for i in range(audio.get_device_count()):
                 device_info = audio.get_device_info_by_index(i)
                 result.append(device_info.get("name"))
-        finally:
-            audio.terminate()
-        return result
-
-    @staticmethod
-    def list_working_microphones():
-        """
-        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
-
-        Returns a dictionary mapping device indices to microphone names, for microphones that are currently
-        hearing sounds.
-
-        When using this function, ensure that your microphone is unmuted
-        and make some noise at it to ensure it will be detected as working.
-        """
-        pyaudio_module = Microphone.get_pyaudio()
-        audio = pyaudio_module.PyAudio()
-        try:
-            result = {}
-            for device_index in range(audio.get_device_count()):
-                device_info = audio.get_device_info_by_index(device_index)
-                device_name = device_info.get("name")
-                assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info[
-                    "defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
-                try:
-                    # read audio
-                    pyaudio_stream = audio.open(
-                        input_device_index=device_index, channels=1, format=pyaudio_module.paInt16,
-                        rate=int(device_info["defaultSampleRate"]), input=True
-                    )
-                    try:
-                        buffer = pyaudio_stream.read(1024)
-                        if not pyaudio_stream.is_stopped(): pyaudio_stream.stop_stream()
-                    finally:
-                        pyaudio_stream.close()
-                except Exception:
-                    continue
-
-                # compute RMS of debiased audio
-                energy = -audioop.rms(buffer, 2)
-                energy_bytes = chr(energy & 0xFF) + chr((energy >> 8) & 0xFF) if bytes is str else bytes(
-                    [energy & 0xFF, (energy >> 8) & 0xFF])  # Python 2 compatibility
-                debiased_energy = audioop.rms(audioop.add(buffer, energy_bytes * (len(buffer) // 2), 2), 2)
-
-                if debiased_energy > 30:  # probably actually audio
-                    result[device_index] = device_name
         finally:
             audio.terminate()
         return result
@@ -464,6 +473,8 @@ class Microphone(SpeechSource):
     class MicrophoneStream(object):
         """
         Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+
+        Used to stream microphone. Will be called in Recognizer.
 
         """
         def __init__(self, pyaudio_stream):

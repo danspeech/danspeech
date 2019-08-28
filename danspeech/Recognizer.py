@@ -13,9 +13,31 @@ import numpy as np
 class Recognizer(object):
     """
     Recognizer Class, which represents a collection of speech recognition functionality.
+
+    None of the parameters are required, but you need to update the Recognizer with a valid model
+    before being able to perform speech recognition.
+
+        :param DeepSpeech model:
+            A valid DanSpeech model (``danspeech.deepspeech.model.DeepSpeech``)
+
+            See :ref:`pre-trained-models` for more information.
+
+            This can also be your custom DanSpeech trained model.
+        :param str lm:
+            A path (``str``) to a valid .klm language model. See :ref:`language-models` for a list
+            of pretrained available models.
+        :param bool with_gpu:
+            A ``bool`` representing whether you want to run the ``Recognizer`` with a GPU.
+
+            Note: Requires a GPU.
+        :param \**kwargs:
+            Additional decoder arguments. See :meth:`Recognizer.update_decoder` for more information.
+        :Example:
+            recognizer = Recognizer()
     """
 
-    def __init__(self, model=None, lm=None, **kwargs):
+    def __init__(self, model=None, lm=None, with_gpu=False, **kwargs):
+
 
         # Listening to a stream parameters
         # minimum audio energy to consider for recording
@@ -39,7 +61,7 @@ class Recognizer(object):
         self.dynamic_energy_adjustment_damping = 0.15
         self.dynamic_energy_ratio = 1.5
 
-        self.danspeech_recognizer = DanSpeechRecognizer(**kwargs)
+        self.danspeech_recognizer = DanSpeechRecognizer(with_gpu=with_gpu, **kwargs)
 
         self.stream = False
         self.stream_thread_stopper = None
@@ -57,45 +79,56 @@ class Recognizer(object):
         # Being able to bind the microphone to the recognizer is useful.
         self.microphone = None
 
+    def recognize(self, audio_data, show_all=False):
+        """
+        Performs speech recognition with the current initialized DanSpeech model
+        (``danspeech.deepspeech.model.DeepSpeech``).
+
+        :param array audio_data: ``Numpy array`` of audio data. Use :meth:`audio.load_audio` to load your audio
+            into a valid format.
+        :param bool show_all: Whether to return all beams from beam search, if decoding is
+            performed with a language model.
+        :return: The most likely transcription if ``show_all=false`` (the default). Otherwise, returns the
+            most likely beams from beam search with a language model.
+        :rtype: str or list[str] if ``show_all=True``.
+        """
+        return self.danspeech_recognizer.transcribe(audio_data, show_all=show_all)
+
     def update_model(self, model):
         """
-        Updates the model being used by the Recognizer.
+        Updates the DanSpeech model being used by the Recognizer.
 
-        :param model: DanSpeech model (see DanSpeech.pretrained_models)
-        :return: None
+        :param model: A valid DanSpeech model (``danspeech.deepspeech.model.DeepSpeech``).
+            See :ref:`pre-trained-models` for a list of pretrained available models.
+            This can also be your custom DanSpeech trained model.
+
         """
         self.danspeech_recognizer.update_model(model)
         print("DanSpeech model updated to: {0}".format(model.model_name))
 
     def update_decoder(self, lm=None, alpha=None, beta=None, beam_width=None):
         """
-        Updates the decoder being used by the Recognizer.
+        Updates the decoder being used by the Recognizer. By default, greedy decoding of the DanSpeech
+        model will be performed.
 
-        If lm is None or "greedy", then the decoding will be performed by greedy decoding, and the alpha, beta and
+        If lm is None or lm="greedy", then the decoding will be performed by greedy decoding, and the alpha, beta and
         beam width parameters are therefore ignored.
 
-        :param lm: DanSpeech Language model (see DanSpeech.language_models)
-        :param alpha: Alpha parameter of beam search decoding. If None, then the decoder will use existing parameter
-        in DanSpeechRecognizer.
-        :param beta: Beta parameter of beam search decoding. If None, then the decoder will use existing parameter
-        in DanSpeechRecognizer.
-        :param beam_width: Beam width of beam search decoding. If None, then the decoder will use existing parameter
-        in DanSpeechRecognizer.
-        :return: None
+        **Warning:** Language models requires the `ctc-decode <https://github.com/parlance/ctcdecode.git>`_
+        python package to work.
+
+        :param str lm: A path to a valid .klm language model. See :ref:`language-models` for a list
+            of pretrained available models.
+        :param float alpha: Alpha parameter of beam search decoding.  If None, then the default parameter of
+            ``alpha=1.3`` is used
+        :param float beta: Beta parameter of beam search decoding. If None, then the default parameter of
+            ``beta=0.2`` is used
+        :param int beam_width: Beam width of beam search decoding. If None, then the default parameter of
+            ``beam_width=64`` is used.
         """
         self.danspeech_recognizer.update_decoder(lm=lm, alpha=alpha, beta=beta, beam_width=beam_width)
         print("DanSpeech decoder updated ")  # ToDO: Include model name
 
-    def update_stream_parameters(self, energy_threshold=None, pause_threshold=None,
-                                 phrase_threshold=None, non_speaing_duration=None):
-        if energy_threshold:
-            self.energy_threshold = energy_threshold
-        if pause_threshold:
-            self.pause_threshold = pause_threshold
-        if phrase_threshold:
-            self.phrase_threshold = phrase_threshold
-        if non_speaing_duration:
-            self.non_speaking_duration = non_speaing_duration
 
     def listen(self, source, timeout=None, phrase_time_limit=None):
         """
@@ -289,81 +322,6 @@ class Recognizer(object):
         raise WrongUsageOfListen("Wrong usage of stream. Overwrite the listen generator with a new generator instance"
                                  "since this instance has completed a full listen.")
 
-    def adjust_for_ambient_noise(self, source, duration=2):
-        """
-        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
-        Modified for DanSpeech
-
-        Only use if the default energy level does not match your use case.
-
-        :param source: Source of audio. Needs to be a Danspeech.audio.resources.SpeechSource instance
-        :param duration: Maximum duration of adjusting the energy threshold
-        :return: None
-        """
-        assert isinstance(source, SpeechSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before adjusting, " \
-                                          "see documentation for ``AudioSource``; are you using " \
-                                          "``source`` outside of a ``with`` statement?"
-        assert self.pause_threshold >= self.non_speaking_duration >= 0
-
-        seconds_per_buffer = (source.chunk + 0.0) / source.sampling_rate
-        elapsed_time = 0
-
-        # adjust energy threshold until a phrase starts
-        while True:
-            elapsed_time += seconds_per_buffer
-            if elapsed_time > duration:
-                break
-
-            buffer = source.stream.read(source.chunk)
-            energy = audioop.rms(buffer, source.sampling_width)  # energy of the audio signal
-
-            # dynamically adjust the energy threshold using asymmetric weighted average
-            damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
-            target_energy = energy * self.dynamic_energy_ratio
-            self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
-
-    def adjust_for_speech(self, source, duration=2):
-        """
-        Adjusts the energy level threshold for detecting speech by listening to speech.
-
-        Remember to talk!
-
-        Only use if the default energy level does not match your use case.
-
-        :param source: Source of audio. Needs to be a Danspeech.audio.resources.SpeechSource instance
-        :param duration: Maximum duration of adjusting the energy threshold
-        :return: None
-        """
-        assert isinstance(source, SpeechSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before adjusting, " \
-                                          "see documentation for ``AudioSource``; are you using ``source``" \
-                                          " outside of a ``with`` statement?"
-        assert self.pause_threshold >= self.non_speaking_duration >= 0
-
-        seconds_per_buffer = (source.chunk + 0.0) / source.sampling_rate
-        elapsed_time = 0
-
-        energy_levels = []
-        # adjust energy threshold until a phrase starts
-        while True:
-            elapsed_time += seconds_per_buffer
-            if elapsed_time > duration:
-                break
-
-            buffer = source.stream.read(source.chunk)
-            energy = audioop.rms(buffer, source.sampling_width)  # energy of the audio signal
-            energy_levels.append(energy)
-
-        energy_average = sum(energy_levels) / len(energy_levels)
-
-        # Subtract some ekstra energy, since we take average
-        if energy_average > 80:
-            self.energy_threshold = energy_average - 80
-        else:
-            self.energy_threshold = energy_average
-
-
     @staticmethod
     def get_audio_data(frames, source):
         """
@@ -440,11 +398,155 @@ class Recognizer(object):
         listener_thread.start()
         return stopper, get_data
 
-    def stop_real_time_streaming(self, keep_secondary_model_loaded=False):
+    def enable_streaming(self):
         """
-        Used to stop microphone streaming.
+        Adjusts the Recognizer to continuously transcribe a stream of audio input.
 
-        :return: None
+        Use this before starting a stream.
+
+        :example:
+
+            .. code-block:: python
+
+                recognizer.enable_streaming()
+
+        """
+        if self.stream:
+            print("Streaming already enabled...")
+        else:
+            self.stream = True
+
+    def disable_streaming(self):
+        """
+        Adjusts the Recognizer to stop expecting a stream of audio input.
+
+        Use this after cancelling a stream.
+
+        :example:
+
+            .. code-block:: python
+
+                recognizer.disable_streaming()
+
+        """
+        if self.stream:
+            self.stream = False
+            self.stream_thread_stopper(wait_for_stop=False)
+        else:
+            self.stream = True
+
+    def streaming(self, source):
+        """
+        Generator class for a stream audio source a :meth:`Microphone`
+
+        Spawns a background thread and uses the loaded model to continuously transcribe audio input between
+        detected silences from the :meth:`Microphone` stream.
+
+        **Warning:** Requires that :meth:`Recognizer.enable_streaming` has been called.
+
+        :param Microphone source: Source of audio.
+
+        :example:
+
+            .. code-block:: python
+
+                generator = recognizer.streaming(source=m)
+
+                # Runs for a long time. Insert your own stop condition.
+                for i in range(100000):
+                    trans = next(generator)
+                    print(trans)
+
+        """
+        stopper, data_getter = self.listen_in_background(source)
+        self.stream_thread_stopper = stopper
+
+        is_last = False
+        is_first_data = False
+        data_array = []
+
+        while self.stream:
+            # Loop for data (gets all the available data from the stream)
+            while True:
+
+                # If it is the last one in a stream, break and perform recognition no matter what
+                if is_last:
+                    is_first_data = True
+                    break
+
+                # Get all available data
+                try:
+                    if is_first_data:
+                        is_last, data_array = data_getter()
+                        is_first_data = False
+                    else:
+                        is_last, temp = data_getter()
+                        data_array = np.concatenate((data_array, temp))
+                # If this exception is thrown, then we no available data
+                except NoDataInBuffer:
+                    # If no data in buffer, we sleep and wait
+                    time.sleep(0.2)
+
+            # Since we only break out of data loop, if we need a prediction, the following works
+            # We only do a prediction if the length of gathered audio is above a threshold
+            if len(data_array) > self.mininum_required_speaking_seconds * source.sampling_rate:
+                yield self.recognize(data_array)
+
+            is_last = False
+            data_array = []
+
+    def enable_real_time_streaming(self, streaming_model, secondary_model=None, string_parts=True):
+        """
+        Adjusts the Recognizer to  continuously transcribe a stream of audio input real-time.
+
+        Real-time audio streaming utilize a uni-directional model to transcribe an utterance while
+        being spoken in contrast to :meth:`Recognizer.streaming`, where the utterance is transcribed after
+        a silence has been detenced.
+
+        Use this before starting a (:meth:`Recognizer.real_time_streaming`) stream.
+
+        :param DeepSpeech streaming_model: The DanSpeech model to perform streaming. This model needs to
+            be uni-directional. This is required for real-time streaming to work.
+            The two available DanSpeech models are :meth:`pretrained_models.CPUStreamingRNN` and
+            :meth:`pretrained_models.GPUStreamingRNN` but you may use your own custom streaming model as well.
+
+        :param DeepSpeech secondary_model: A valid DanSpeech model (``danspeech.deepspeech.model.DeepSpeech``).
+            The secondary model transcribes the output after a silence is detected. This is useful since the performance
+            of uni-directional models is very poor compared to bi-directional models, which require the full utterance.
+            See :ref:`pre-trained-models` for more information on available models. This can also be your custom DanSpeech trained model.
+
+        :param bool string_parts:
+            Boolean indicating whether you want the generator (:meth:`Recognizer.real_time_streaming`) to yield
+            parts of the string or the whole (currrent) iterating string. Recommended is ``string_parts=True`` and then
+            keep track of the transcription yourself.
+        :example:
+
+            .. code-block:: python
+
+                recognizer.enable_real_time_streaming(streaming_model=CPUStreamingRNN())
+
+        """
+        # Update streaming model from Recognizer and not inside the DanSpeechRecognizer
+        self.update_model(streaming_model)
+        self.danspeech_recognizer.enable_streaming(secondary_model, string_parts)
+        self.stream = True
+
+    def disable_real_time_streaming(self, keep_secondary_model_loaded=False):
+        """
+        Adjusts the Recognizer to stop expecting a stream of audio input.
+
+        Use this after cancelling a stream.
+
+        :param bool keep_secondary_model_loaded: Whether to keep the secondary model in memory or not. Generally,
+            you do not want to keep it in memory, unless you want to perform :meth:`Recognizer.real_time_streaming`
+            again after disabling the real-time streaming.
+
+        :example:
+
+            .. code-block:: python
+
+                recognizer.disable_real_time_streaming()
+
         """
         if self.stream:
             print("Stopping microphone stream...")
@@ -454,27 +556,46 @@ class Recognizer(object):
         else:
             print("No stream is running for the Recognizer")
 
-    def enable_real_time_streaming(self, streaming_model, secondary_model=None, string_parts=True):
-        """
-        :param source: Source of audio
-        :param streaming_model: The DanSpeech model to perform streaming. This model needs to be uni-directional.
-        This is required for streaming to work. The two available DanSpeech models are CPUStreamingRNN and
-        GPUStreamingRNN but you may create a custom streaming model as well.
-        """
-        # Update streaming model from Recognizer and not inside the DanSpeechRecognizer
-        self.update_model(streaming_model)
-        self.danspeech_recognizer.enable_streaming(secondary_model, string_parts)
-        self.stream = True
-
     def real_time_streaming(self, source):
         """
-        Generator class to handle a stream from the source of audio, most likely a microphone.
+        Generator class for a real-time stream audio source a :meth:`Microphone`.
 
-        This method assumes that you use a model with default spectrogram/audio parameters i.e. 20ms audio for each
-        stft and 50% overlap.
+        Spawns a background thread and uses the loaded model(s) to continuously transcribe an audio utterance
+        while it is being spoken.
 
+        **Warning:** Requires that :meth:`Recognizer.enable_real_time_streaming` has been called.
 
-        :return: Boolean to indicated if it is ending of an utterance and the transcribed output
+        :param Microphone source: Source of audio.
+
+        :example:
+
+            .. code-block:: python
+
+                generator = r.real_time_streaming(source=m)
+
+                iterating_transcript = ""
+                print("Speak!")
+                while True:
+                    is_last, trans = next(generator)
+
+                    # If the transcription is empty, it means that the energy level required for data
+                    # was passed, but nothing was predicted.
+                    if is_last and trans:
+                        print("Final: " + trans)
+                        iterating_transcript = ""
+                        continue
+
+                    if trans:
+                        iterating_transcript += trans
+                        print(iterating_transcript)
+                        continue
+
+        The generator yields both a boolean (is_last) to indicate whether it is a full utterance
+        (detected by silences in audio input) and the (current/part) transcription. If the is_last boolean is true,
+        then it is a full utterance determined by a silence.
+
+        **Warning:** This method assumes that you use a model with default spectrogram/audio parameters i.e. 20ms
+        audio for each stft and 50% overlap.
         """
 
         lookahead_context = self.danspeech_recognizer.model.context
@@ -592,73 +713,105 @@ class Recognizer(object):
                 is_last = False
                 output = None
 
-    def enable_streaming(self):
-        if self.stream:
-            print("Streaming already enabled...")
+    def adjust_for_speech(self, source, duration=4):
+        """
+        Adjusts the energy level threshold required for the :meth:`audio.Microphone` to detect
+        speech in background.
+
+        **Warning:** You need to talk after calling this method! Else, the energy level will be too low. If talking
+        to adjust energy level is not an option, use :meth:`Recognizer.adjust_for_ambient_noise` instead.
+
+        Only use if the default energy level does not match your use case.
+
+        :param Microphone source: Source of audio.
+        :param float duration: Maximum duration of adjusting the energy threshold
+
+        """
+        assert isinstance(source, SpeechSource), "Source must be an audio source"
+        assert source.stream is not None, "Audio source must be entered before adjusting, " \
+                                          "see documentation for ``AudioSource``; are you using ``source``" \
+                                          " outside of a ``with`` statement?"
+        assert self.pause_threshold >= self.non_speaking_duration >= 0
+
+        seconds_per_buffer = (source.chunk + 0.0) / source.sampling_rate
+        elapsed_time = 0
+
+        energy_levels = []
+        # adjust energy threshold until a phrase starts
+        while True:
+            elapsed_time += seconds_per_buffer
+            if elapsed_time > duration:
+                break
+
+            buffer = source.stream.read(source.chunk)
+            energy = audioop.rms(buffer, source.sampling_width)  # energy of the audio signal
+            energy_levels.append(energy)
+
+        energy_average = sum(energy_levels) / len(energy_levels)
+
+        # Subtract some ekstra energy, since we take average
+        if energy_average > 80:
+            self.energy_threshold = energy_average - 80
         else:
-            self.stream = True
+            self.energy_threshold = energy_average
 
-    def stop_streaming(self):
-        if self.stream:
-            self.stream = False
-            self.stream_thread_stopper(wait_for_stop=False)
-        else:
-            self.stream = True
-
-    def streaming(self, source):
+    def adjust_for_ambient_noise(self, source, duration=2):
         """
-        Generator class for a stream audio source e.g. a Microphone
+        Source: https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py
+        Modified for DanSpeech
 
-        Spawns a background thread and uses the loaded model to transcribe
+        Adjusts the energy level threshold required for the :meth:`audio.Microphone` to detect
+        speech in background. It is based on the energy level in the background.
 
-        :param source:
-        :return:
+        **Warning:** Do not talk while adjusting energy threshold with this method. This method generally
+        sets the energy level very low. We recommend using :meth:`Recognizer.adjust_for_speech` instead.
+
+        Only use if the default energy level does not match your use case.
+
+        :param Microphone source: Source of audio.
+        :param float duration: Maximum duration of adjusting the energy threshold
+
         """
-        stopper, data_getter = self.listen_in_background(source)
-        self.stream_thread_stopper = stopper
+        assert isinstance(source, SpeechSource), "Source must be an audio source"
+        assert source.stream is not None, "Audio source must be entered before adjusting, " \
+                                          "see documentation for ``AudioSource``; are you using " \
+                                          "``source`` outside of a ``with`` statement?"
+        assert self.pause_threshold >= self.non_speaking_duration >= 0
 
-        is_last = False
-        is_first_data = False
-        data_array = []
+        seconds_per_buffer = (source.chunk + 0.0) / source.sampling_rate
+        elapsed_time = 0
 
-        while self.stream:
-            # Loop for data (gets all the available data from the stream)
-            while True:
+        # adjust energy threshold until a phrase starts
+        while True:
+            elapsed_time += seconds_per_buffer
+            if elapsed_time > duration:
+                break
 
-                # If it is the last one in a stream, break and perform recognition no matter what
-                if is_last:
-                    is_first_data = True
-                    break
+            buffer = source.stream.read(source.chunk)
+            energy = audioop.rms(buffer, source.sampling_width)  # energy of the audio signal
 
-                # Get all available data
-                try:
-                    if is_first_data:
-                        is_last, data_array = data_getter()
-                        is_first_data = False
-                    else:
-                        is_last, temp = data_getter()
-                        data_array = np.concatenate((data_array, temp))
-                # If this exception is thrown, then we no available data
-                except NoDataInBuffer:
-                    # If no data in buffer, we sleep and wait
-                    time.sleep(0.2)
+            # dynamically adjust the energy threshold using asymmetric weighted average
+            damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
+            target_energy = energy * self.dynamic_energy_ratio
+            self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
-            # Since we only break out of data loop, if we need a prediction, the following works
-            # We only do a prediction if the length of gathered audio is above a threshold
-            if len(data_array) > self.mininum_required_speaking_seconds * source.sampling_rate:
-                yield self.recognize(data_array)
 
-            is_last = False
-            data_array = []
-
-    def recognize(self, audio_data, show_all=False):
+    def update_stream_parameters(self, energy_threshold=None, pause_threshold=None,
+                                 phrase_threshold=None, non_speaing_duration=None):
         """
-        Performs speech recognition with the current initialized model.
+        Updates parameters for stream of audio. Only use if the default streaming from
+        your microphone is working poorly.
 
-        :param audio_data: Numpy array of audio data
-        :param show_all: Whether to return all beams for beam search, if the beam search is enabled.
-        :return: Returns the most likely transcription if show_all is false (the default). Otherwise, returns the
-        most likely beams from beam search with a language model
+        :param float energy_threshold: Minimum audio energy required for the stream to start detecting an utterance.
+        :param float pause_threshold: Seconds of non-speaking audio before a phrase is considered complete.
+        :param float phrase_threshold: Minimum seconds of speaking audio before we consider the speaking audio a phrase.
+        :param float non_speaing_duration: Seconds of non-speaking audio to keep on both sides of the recording.
         """
-
-        return self.danspeech_recognizer.transcribe(audio_data, show_all=show_all)
+        if energy_threshold:
+            self.energy_threshold = energy_threshold
+        if pause_threshold:
+            self.pause_threshold = pause_threshold
+        if phrase_threshold:
+            self.phrase_threshold = phrase_threshold
+        if non_speaing_duration:
+            self.non_speaking_duration = non_speaing_duration

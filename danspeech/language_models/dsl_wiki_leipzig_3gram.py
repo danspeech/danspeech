@@ -7,8 +7,10 @@ def DSLWikiLeipzig3gram(cache_dir=None):
     """
     DSL, wikipedia and Leipzig corpus trained 3-gram model.
 
-    :param cache_dir: If you wish to cash your models somewhere else than default
-    :return: string, path to .klm language model
+    :param str cache_dir: If you wish to use custom directory to stash/cache your models. This is generally not
+        recommended, and if left out, the DanSpeech models will be stored in the ``~/.danspeech/lms/`` folder.
+    :return: path to .klm language model
+    :rtype: str
     """
     return get_model(model_name="dsl_wiki_leipzig_3gram.klm",
                      origin=LANGUAGE_MODEL_ORIGIN,
