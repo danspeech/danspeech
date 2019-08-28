@@ -2,8 +2,7 @@ from danspeech.deepspeech.model import DeepSpeech
 from danspeech.utils.data_utils import get_model
 
 
-# ToDo: Add model package link for release
-MODEL_PACKAGE = "toDo"
+MODEL_PACKAGE = "https://github.com/danspeech/danspeech/releases/download/v0.01-alpha/DanSpeechPrimary.pth"
 
 
 def DanSpeechPrimary(cache_dir=None):

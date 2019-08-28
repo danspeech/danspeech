@@ -2,8 +2,7 @@ from danspeech.deepspeech.model import DeepSpeech
 from danspeech.utils.data_utils import get_model
 
 
-# ToDO: This link works but should be changed as the models are released.
-MODEL_PACKAGE = 'https://github.com/Rasmusafj/models_development/raw/master/400units.pth'
+MODEL_PACKAGE = 'https://github.com/danspeech/danspeech/releases/download/v0.01-alpha/TestModel.pth'
 
 
 def TestModel(cache_dir=None):

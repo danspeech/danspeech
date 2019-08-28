@@ -1,9 +1,7 @@
 from danspeech.deepspeech.model import DeepSpeech
 from danspeech.utils.data_utils import get_model
 
-
-# ToDo: Add model package link for release
-MODEL_PACKAGE = 'toDO'
+MODEL_PACKAGE = 'https://github.com/danspeech/danspeech/releases/download/v0.01-alpha/Folketinget.pth'
 
 
 def Folketinget(cache_dir=None):
