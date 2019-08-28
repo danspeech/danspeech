@@ -1,0 +1,428 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Pre-trained DanSpeech Models &mdash; DanSpeech 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Language Models" href="lms.html" />
+    <link rel="prev" title="Audio Sources" href="audio.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> DanSpeech
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="danspeech.html">What is DanSpeech?</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Quick-start</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="recognizer.html">Recognizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="audio.html">Audio Sources</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Pre-trained DanSpeech Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-danspeech.pretrained_models">Available models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lms.html">Language Models</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">DanSpeech Examples</a></li>
+</ul>
+<p class="caption"><span class="caption-text">DanSpeech Demo</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="demo.html">Demo</a></li>
+</ul>
+<p class="caption"><span class="caption-text">DanSpeech Train</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="train.html">DanSpeech training repository</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Help DanSpeech</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="github.html">DanSpeech github repository</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributing to DanSpeech</a></li>
+<li class="toctree-l1"><a class="reference internal" href="errors.html">Find errors?</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DanSpeech</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Pre-trained DanSpeech Models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/models.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="pre-trained-danspeech-models">
+<span id="pre-trained-models"></span><h1>Pre-trained DanSpeech Models<a class="headerlink" href="#pre-trained-danspeech-models" title="Permalink to this headline">¶</a></h1>
+<p>All of the available DanSpeech models are shown below. If you need to finetune or train your own model,
+then you can find more information at ???? LINK</p>
+<p>Recommended usage for all models (except a custom model):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">danspeech.pretrained_models</span> <span class="kn">import</span> <span class="n">TestModel</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">TestModel</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="module-danspeech.pretrained_models">
+<span id="available-models"></span><h2>Available models<a class="headerlink" href="#module-danspeech.pretrained_models" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="danspeech.pretrained_models.DanSpeechPrimary">
+<code class="sig-prename descclassname">danspeech.pretrained_models.</code><code class="sig-name descname">DanSpeechPrimary</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.pretrained_models.DanSpeechPrimary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deepest and best performing DanSpeech model.</p>
+<p>3 Conv layers</p>
+<p>9 RNN Layers with 1200 hidden units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/models/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pretrained DeepSpeech (Best Performing) model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">danspeech.deepspeech.model.DeepSpeech</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.pretrained_models.TestModel">
+<code class="sig-prename descclassname">danspeech.pretrained_models.</code><code class="sig-name descname">TestModel</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.pretrained_models.TestModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test model that runs very fast even on CPUs</p>
+<p>Performance is very bad!</p>
+<p>2 Conv layers</p>
+<p>5 RNN Layers with 400 hidden units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/models/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pretrained DeepSpeech (Testing purposes) model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">danspeech.deepspeech.model.DeepSpeech</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.pretrained_models.Baseline">
+<code class="sig-prename descclassname">danspeech.pretrained_models.</code><code class="sig-name descname">Baseline</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.pretrained_models.Baseline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Baseline DanSpeech model.</p>
+<p>2 Conv layers</p>
+<p>5 RNN Layers with 800 hidden units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/models/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pretrained DeepSpeech (Baseline) model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">danspeech.deepspeech.model.DeepSpeech</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.pretrained_models.CPUStreamingRNN">
+<code class="sig-prename descclassname">danspeech.pretrained_models.</code><code class="sig-name descname">CPUStreamingRNN</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.pretrained_models.CPUStreamingRNN" title="Permalink to this definition">¶</a></dt>
+<dd><p>DanSpeech model with lookahead, which works as a real-time streaming model.</p>
+<p>This model runs on most modern CPUs.</p>
+<p>2 conv layers</p>
+<p>5 RNN layers (not bidirectional) with 800 units each</p>
+<p>Lookahead context is 20</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/models/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pretrained DeepSpeech (Streaming for CPU) model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">danspeech.deepspeech.model.DeepSpeech</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.pretrained_models.GPUStreamingRNN">
+<code class="sig-prename descclassname">danspeech.pretrained_models.</code><code class="sig-name descname">GPUStreamingRNN</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.pretrained_models.GPUStreamingRNN" title="Permalink to this definition">¶</a></dt>
+<dd><p>DanSpeech model with lookahead, which works as a real-time streaming model.</p>
+<p>This model will not be able to follow a stream of data on regular CPUS. Hence, use a GPU.</p>
+<p>2 conv layers</p>
+<p>5 RNN layers (not bidirectional) with 2000 units each</p>
+<p>Lookahead context is 20</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/models/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pretrained DeepSpeech (Streaming for GPU) model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">danspeech.deepspeech.model.DeepSpeech</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.pretrained_models.Folketinget">
+<code class="sig-prename descclassname">danspeech.pretrained_models.</code><code class="sig-name descname">Folketinget</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.pretrained_models.Folketinget" title="Permalink to this definition">¶</a></dt>
+<dd><p>The deepest and best performing DanSpeech model finetuned to data from Folketinget.</p>
+<p>3 Conv layers</p>
+<p>9 RNN Layers with 1200 hidden units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/models/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pretrained DeepSpeech (Folketinget tuned) model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">danspeech.deepspeech.model.DeepSpeech</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.pretrained_models.TransferLearned">
+<code class="sig-prename descclassname">danspeech.pretrained_models.</code><code class="sig-name descname">TransferLearned</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.pretrained_models.TransferLearned" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Librispeech English model adapted to Danish while keeping the conv layers and the lowest/first RNN layer frozen</p>
+<p>This model performs better than the DanSpeechPrimary model on noisy data.</p>
+<p>2 Conv layers</p>
+<p>5 RNN Layers with 800 hidden units</p>
+<p>param str cache_dir: If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/models/</span></code> folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Pretrained DeepSpeech (Transfer learned from English) model</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">danspeech.deepspeech.model.DeepSpeech</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.pretrained_models.EnglishLibrispeech">
+<code class="sig-prename descclassname">danspeech.pretrained_models.</code><code class="sig-name descname">EnglishLibrispeech</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.pretrained_models.EnglishLibrispeech" title="Permalink to this definition">¶</a></dt>
+<dd><p>English trained model on the Librispeech corpus.</p>
+<p>2 Conv layers</p>
+<p>5 RNN Layers with 800 hidden units</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/models/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pretrained DeepSpeech (English speech recognition) model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">danspeech.deepspeech.model.DeepSpeech</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.pretrained_models.CustomModel">
+<code class="sig-prename descclassname">danspeech.pretrained_models.</code><code class="sig-name descname">CustomModel</code><span class="sig-paren">(</span><em class="sig-param">model_path</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.pretrained_models.CustomModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiates customly trained models</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model_path</strong> (<em>str</em>) – Path to custom trained model</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Custom DeepSpeech model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">danspeech.deepspeech.model.DeepSpeech</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lms.html" class="btn btn-neutral float-right" title="Language Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="audio.html" class="btn btn-neutral float-left" title="Audio Sources" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Martin Carsten Nielsen, Rasmus Arpe Fogh Jensen
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(false);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

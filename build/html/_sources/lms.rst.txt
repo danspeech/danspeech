@@ -1,8 +1,0 @@
-===============
-Language Models
-===============
-Add some text here to describe the language models
-
-.. automodule:: danspeech.language_models
-    :members: DSL3gram, DSL5gram, DSL3gramWithNames, DSLWiki3gram, DSLWiki5gram, DSLWikiLeipzig3gram,
-        DSLWikiLeipzig5gram, Wiki3gram, Wiki5gram, Folketinget3gram
