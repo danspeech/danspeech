@@ -246,6 +246,7 @@ class Recognizer(object):
 
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0  # number of seconds of audio read
+        buffer = []
         while self.stream:
             frames = []
 
