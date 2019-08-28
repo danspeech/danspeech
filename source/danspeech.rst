@@ -4,11 +4,16 @@ What is DanSpeech?
 
 DanSpeech is an open-source Danish speech recognition (speech-to-text) python package based on the
 `PyTorch <https://pytorch.org/>`_ deep learning framework. It was developed as part of a Master's thesis at DTU
-by Martin Carsten Nielsen and Rasmus Arpe Figh Jensen with supervisor Professor Lars Kai.
+by Martin Carsten Nielsen and Rasmus Arpe Figh Jensen with supervisor Professor Lars Kai Hansen.
 
-All of the DanSpeech models are end-to-end `DeepSpeech 2 <https://arxiv.org/abs/1512.02595>`_ models trained on danish
+All of the DanSpeech models are end-to-end `DeepSpeech 2 <https://arxiv.org/abs/1512.02595>`_ models ctc trained on danish
 text with various data agumentations as an attempt multiply the rather small and public speech recognition
-data available in Danish. The models perform state-of-the-art speech recognition in Danish but performance is
+data available in Danish.
+
+The models may further be combined with a language model through `beam-search decoding <https://arxiv.org/pdf/1408.2873.pdf>`_
+for the best possible speech recognition.
+
+The models perform state-of-the-art speech recognition in Danish but performance is
 evidently not perfect and conditioned on specific use-cases.
 
 Danspeech contains:

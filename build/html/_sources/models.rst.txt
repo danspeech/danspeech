@@ -1,0 +1,9 @@
+.. _pre-trained-models:
+
+============================
+Pre-trained DanSpeech Models
+============================
+
+.. automodule:: danspeech.pretrained_models
+    :members: DanSpeechPrimary, TestModel, Baseline, TransferLearned, Folketinget, EnglishLibrispeech,
+        CPUStreamingRNN, GPUStreamingRNN, CustomModel

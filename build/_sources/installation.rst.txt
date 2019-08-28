@@ -15,7 +15,6 @@ DanSpeech requires python 3.5+.
 
 CTC-decode
 ----------
-
 To use language models with the system, you will need to additionally install `ctc-decode <https://github.com/parlance/ctcdecode.git>`_.
 
 .. code-block:: bash
@@ -24,3 +23,9 @@ To use language models with the system, you will need to additionally install `c
     $ cd ctcdecode && pip install .
 
 **Warning:** This might prove rather troublesome to install on a windows system.
+
+.. _pyaudio-install:
+PyAudio
+-------
+If you wish to transcribe a stream of audio e.g. from a microphone, you will need to additionally install
+`PyAudio <https://pypi.org/project/PyAudio/>`_.

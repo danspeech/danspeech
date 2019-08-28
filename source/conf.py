@@ -13,6 +13,7 @@
 import os
 import sys
 sys.path.append(os.path.abspath('../danspeech'))
+sys.path.append(os.path.abspath('../../example_scripts'))
 
 
 # -- Project information -----------------------------------------------------
@@ -33,7 +34,8 @@ release = '1.0.0'
 extensions = ['recommonmark',
               'sphinx_rtd_theme',
               'sphinx.ext.autodoc',
-              'sphinx.ext.autosummary']
+              'sphinx.ext.autosummary',
+              'sphinx_gallery.gen_gallery']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -59,3 +61,12 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+autodoc_member_order = 'bysource'
+
+sphinx_gallery_conf = {
+     'examples_dirs': '../example_scripts',     # path to your example scripts
+     'gallery_dirs': 'auto_examples',
+    'filename_pattern': '/execute_',
+    'expected_failing_examples': ['../example_scripts/plot_recognize.py']# path where to save gallery generated examples
+}

@@ -1,0 +1,6 @@
+============
+Find errors?
+============
+If you experience errors or have trouble using the software, then please do not hesitate to create issues at
+our repository.
+

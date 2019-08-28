@@ -24,6 +24,7 @@ DanSpeech's Documentation
    :maxdepth: 2
 
    recognizer
+   audio
    models
    lms
 
@@ -31,7 +32,7 @@ DanSpeech's Documentation
    :caption: Examples
    :maxdepth: 2
 
-   examples
+   /auto_examples/index.rst
 
 .. toctree::
    :caption: DanSpeech Demo
@@ -40,13 +41,15 @@ DanSpeech's Documentation
    demo
 
 .. toctree::
-   :caption: DanSpeech Training Repository
+   :caption: DanSpeech Train
    :maxdepth: 2
 
    train
 
 .. toctree::
-   :caption: Appendix
+   :caption: Help DanSpeech
+   :maxdepth: 2
 
-   appendix
-
+   github
+   contribute
+   errors

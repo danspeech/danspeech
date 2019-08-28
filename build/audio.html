@@ -1,0 +1,359 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Audio Sources &mdash; DanSpeech 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Pre-trained DanSpeech Models" href="models.html" />
+    <link rel="prev" title="Recognizer" href="recognizer.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> DanSpeech
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="danspeech.html">What is DanSpeech?</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Quick-start</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="recognizer.html">Recognizer</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Audio Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Pre-trained DanSpeech Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lms.html">Language Models</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">DanSpeech Examples</a></li>
+</ul>
+<p class="caption"><span class="caption-text">DanSpeech Demo</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="demo.html">Demo</a></li>
+</ul>
+<p class="caption"><span class="caption-text">DanSpeech Train</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="train.html">DanSpeech training repository</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Help DanSpeech</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="github.html">DanSpeech github repository</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributing to DanSpeech</a></li>
+<li class="toctree-l1"><a class="reference internal" href="errors.html">Find errors?</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DanSpeech</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Audio Sources</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/audio.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="audio-sources">
+<h1>Audio Sources<a class="headerlink" href="#audio-sources" title="Permalink to this headline">¶</a></h1>
+<p>Using the correct input for the speech recognition models is very important. If you decide to use your own method
+of loading data (or <code class="docutils literal notranslate"><span class="pre">librosa</span></code>’s method), then recognition performance might/will be degraded.</p>
+<p>A list of the most important audio utilities is provided below.</p>
+<span class="target" id="module-danspeech.audio"></span><dl class="function">
+<dt id="danspeech.audio.load_audio">
+<code class="sig-prename descclassname">danspeech.audio.</code><code class="sig-name descname">load_audio</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">duration=None</em>, <em class="sig-param">offset=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.audio.load_audio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a sound file.</p>
+<p>Supported formats are WAV, AIFF, FLAC.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to sound file</p></li>
+<li><p><strong>duration</strong> (<em>float</em>) – Duration in seconds of how much to use. If duration is not specified,
+then it will record until there is no more audio input.</p></li>
+<li><p><strong>offset</strong> (<em>float</em>) – Where to start in seconds in the clip.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Input array ready for speech recognition.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">numpy.array</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.audio.load_audio_wavPCM">
+<code class="sig-prename descclassname">danspeech.audio.</code><code class="sig-name descname">load_audio_wavPCM</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.audio.load_audio_wavPCM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fast load of wav.</p>
+<p>This works well if you are certain that your wav files are PCM encoded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path to wave file.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Input array ready for speech recognition.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">numpy.array</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="danspeech.audio.Microphone">
+<em class="property">class </em><code class="sig-prename descclassname">danspeech.audio.</code><code class="sig-name descname">Microphone</code><span class="sig-paren">(</span><em class="sig-param">device_index=None</em>, <em class="sig-param">sampling_rate=16000</em>, <em class="sig-param">chunk_size=1024</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.audio.Microphone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Source: <a class="reference external" href="https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py">https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py</a></p>
+<p>Modified for DanSpeech</p>
+<p><strong>Warning:</strong> Requires PyAudio.</p>
+<p>Creates a Microphone instance, which represents the a microphone on the computer.</p>
+<p>The microphone needs a device index, or else it will try to use the default microphone of the system.</p>
+<p>Sampling rate should always be 16000, if the microphone should work with DanSpeech models.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device_index</strong> (<em>int</em>) – The device index of your microphone. Use <a class="reference internal" href="#danspeech.audio.Microphone.list_microphone_names" title="danspeech.audio.Microphone.list_microphone_names"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Microphone.list_microphone_names()</span></code></a> to
+find the available input sources and choose the appropriate one.</p></li>
+<li><p><strong>sampling_rate</strong> (<em>int</em>) – Should always be 16000 unless you configured audio configuration of a
+your own trained danspeech model.</p></li>
+<li><p><strong>chunk_size</strong> (<em>int</em>) – Avoid changing chunk size unless it is strictly neccessary.
+WARNING: Will possibly break microphone streaming with DanSpeech models.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Example</dt>
+<dd class="field-even"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">danspeech</span> <span class="kn">import</span> <span class="n">Recognizer</span> <span class="p">{}</span>
+<span class="kn">from</span> <span class="nn">danspeech.pretrained_models</span> <span class="kn">import</span> <span class="n">TestModel</span>
+<span class="kn">from</span> <span class="nn">danspeech.audio.resources</span> <span class="kn">import</span> <span class="n">Microphone</span>
+
+<span class="c1"># Get a list of microphones found by PyAudio</span>
+<span class="n">mic_list</span> <span class="o">=</span> <span class="n">Microphone</span><span class="o">.</span><span class="n">list_microphone_names</span><span class="p">()</span>
+<span class="n">mic_list_with_numbers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mic_list</span><span class="p">)),</span> <span class="n">mic_list</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Available microphones: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mic_list_with_numbers</span><span class="p">))</span>
+
+<span class="c1"># Choose the microphone</span>
+<span class="n">mic_number</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Pick the number of the microphone you would like to use: &quot;</span><span class="p">)</span>
+
+<span class="c1"># Init a microphone object</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">Microphone</span><span class="p">(</span><span class="n">sampling_rate</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">device_index</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">mic_number</span><span class="p">))</span>
+
+<span class="c1"># Init a DanSpeech model and create a Recognizer instance</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">TestModel</span><span class="p">()</span>
+<span class="n">recognizer</span> <span class="o">=</span> <span class="n">Recognizer</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Speek a lot to adjust silence detection from microphone...&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">m</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>
+    <span class="n">recognizer</span><span class="o">.</span><span class="n">adjust_for_speech</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="c1"># Enable streaming</span>
+<span class="n">recognizer</span><span class="o">.</span><span class="n">enable_streaming</span><span class="p">()</span>
+
+<span class="c1"># Create the streaming generator which runs a background thread listening to the microphone stream</span>
+<span class="n">generator</span> <span class="o">=</span> <span class="n">recognizer</span><span class="o">.</span><span class="n">streaming</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
+
+<span class="c1"># The below code runs for a long time. The generator returns transcriptions of spoken speech from your microphone.</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Speak&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100000</span><span class="p">):</span>
+    <span class="n">trans</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">generator</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">trans</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="method">
+<dt id="danspeech.audio.Microphone.list_microphone_names">
+<em class="property">static </em><code class="sig-name descname">list_microphone_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.audio.Microphone.list_microphone_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Source: <a class="reference external" href="https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py">https://github.com/Uberi/speech_recognition/blob/master/speech_recognition/__init__.py</a></p>
+<p>Find all available input sources.</p>
+<p>The index of each microphone’s name in the returned list is the same as its device index when creating
+a Microphone instance - if you want to use the microphone at index 3
+in the returned list, use <code class="docutils literal notranslate"><span class="pre">Microphone(device_index=3)</span></code>.</p>
+<p><strong>Warning:</strong> Will also show sources that are not actually microphones, which will result in an error. Try
+another one, that sounds plausible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of the names of all available microphones.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="models.html" class="btn btn-neutral float-right" title="Pre-trained DanSpeech Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="recognizer.html" class="btn btn-neutral float-left" title="Recognizer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Martin Carsten Nielsen, Rasmus Arpe Fogh Jensen
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(false);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

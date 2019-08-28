@@ -3,4 +3,6 @@ Recognizer
 ==========
 
 .. autoclass:: danspeech.Recognizer
-    :members: adjust_for_ambient_noise
+    :members: update_model, update_decoder, recognize, update_stream_parameters, adjust_for_ambient_noise,
+     adjust_for_speech, enable_streaming, disable_streaming, streaming, enable_real_time_streaming,
+     disable_real_time_streaming, real_time_streaming

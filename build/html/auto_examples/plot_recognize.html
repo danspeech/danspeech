@@ -1,0 +1,280 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Stream of audio from your microphone &mdash; DanSpeech 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/gallery.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DanSpeech
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../danspeech.html">What is DanSpeech?</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Quick-start</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../recognizer.html">Recognizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">Pre-trained DanSpeech Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lms.html">Language Models</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">DanSpeech Examples</a></li>
+</ul>
+<p class="caption"><span class="caption-text">DanSpeech Demo</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../demo.html">Demo</a></li>
+</ul>
+<p class="caption"><span class="caption-text">DanSpeech Train</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../train.html">DanSpeech training repository</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Help DanSpeech</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../github.html">DanSpeech github repository</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing to DanSpeech</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../errors.html">Find errors?</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DanSpeech</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Stream of audio from your microphone</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/auto_examples/plot_recognize.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p>Click <a class="reference internal" href="#sphx-glr-download-auto-examples-plot-recognize-py"><span class="std std-ref">here</span></a> to download the full example code</p>
+</div>
+<div class="sphx-glr-example-title section" id="stream-of-audio-from-your-microphone">
+<span id="sphx-glr-auto-examples-plot-recognize-py"></span><h1>Stream of audio from your microphone<a class="headerlink" href="#stream-of-audio-from-your-microphone" title="Permalink to this headline">¶</a></h1>
+<p>This is an example of using</p>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Using device: cpu
+DanSpeech model updated to: DanSpeechPrimary
+No language model:
+tester en to tre fire fem seks syv otte
+DanSpeech decoder updated
+Single transcription:
+tester en to tre fire fem seks syv otte
+Most likely beams:
+[&#39;tester en to tre fire fem seks syv otte&#39;, &#39;tester en to tre fire fem seks syv otter&#39;, &#39;tester en to tre fire fem seks syv potte&#39;, &#39;tester en to tre fire fem seks syv ette&#39;, &#39;tester en to tre fire fem seks syv motte&#39;, &#39;tester en to tre fire fem seks syv ottes&#39;, &#39;tester en to tre fire fem seks syv otted&#39;, &#39;tester en to tre fire fem seks syv ottet&#39;, &#39;tester en to tre fire fem seks syv otten&#39;, &#39;tester en to tre fire fem seks syv ottev&#39;]
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">danspeech</span> <span class="k">import</span> <span class="n">Recognizer</span>
+<span class="kn">from</span> <span class="nn">danspeech.pretrained_models</span> <span class="k">import</span> <span class="n">DanSpeechPrimary</span>
+<span class="kn">from</span> <span class="nn">danspeech.language_models</span> <span class="k">import</span> <span class="n">DSL3gram</span>
+<span class="kn">from</span> <span class="nn">danspeech.audio</span> <span class="k">import</span> <span class="n">load_audio</span>
+
+<span class="c1"># Load a DanSpeech model. If the model does not exists, it will be downloaded.</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">DanSpeechPrimary</span><span class="p">()</span>
+<span class="n">recognizer</span> <span class="o">=</span> <span class="n">Recognizer</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+
+<span class="c1"># Load the audio file.</span>
+<span class="n">audio</span> <span class="o">=</span> <span class="n">load_audio</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;../example_files/u0013002.wav&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No language model:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">recognizer</span><span class="o">.</span><span class="n">recognize</span><span class="p">(</span><span class="n">audio</span><span class="p">))</span>
+
+<span class="c1"># DanSpeech with a language model.</span>
+<span class="c1"># Note: Requires ctcdecode to work!</span>
+<span class="n">lm</span> <span class="o">=</span> <span class="n">DSL3gram</span><span class="p">()</span>
+<span class="n">recognizer</span><span class="o">.</span><span class="n">update_decoder</span><span class="p">(</span><span class="n">lm</span><span class="o">=</span><span class="n">lm</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Single transcription:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">recognizer</span><span class="o">.</span><span class="n">recognize</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">show_all</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Most likely beams:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">recognizer</span><span class="o">.</span><span class="n">recognize</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">show_all</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  44.257 seconds)</p>
+<div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-recognize-py">
+<div class="sphx-glr-download docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/f286e1ab8cd63ec9918f879b0f3c241f/plot_recognize.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_recognize.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/1cb9217062e3afda79306a394cb229a8/plot_recognize.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_recognize.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Martin Carsten Nielsen, Rasmus Arpe Fogh Jensen
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(false);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

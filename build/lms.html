@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Pre-trained Language Models &mdash; DanSpeech 1.0.0 documentation</title>
+  <title>Language Models &mdash; DanSpeech 1.0.0 documentation</title>
   
 
   
@@ -33,9 +33,10 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="next" title="DanSpeech Examples" href="auto_examples/index.html" />
     <link rel="prev" title="Pre-trained DanSpeech Models" href="models.html" /> 
 </head>
 
@@ -92,24 +93,31 @@
 <p class="caption"><span class="caption-text">Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="recognizer.html">Recognizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="audio.html">Audio Sources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Pre-trained DanSpeech Models</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Pre-trained Language Models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Language Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#method">Method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-danspeech.language_models">Available models</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">DanSpeech Examples</a></li>
 </ul>
 <p class="caption"><span class="caption-text">DanSpeech Demo</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="demo.html">Demo</a></li>
 </ul>
-<p class="caption"><span class="caption-text">DanSpeech Training Repository</span></p>
+<p class="caption"><span class="caption-text">DanSpeech Train</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="train.html">DanSpeech training repository</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Appendix</span></p>
+<p class="caption"><span class="caption-text">Help DanSpeech</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="appendix.html">What is awdawdawd?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="github.html">DanSpeech github repository</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributing to DanSpeech</a></li>
+<li class="toctree-l1"><a class="reference internal" href="errors.html">Find errors?</a></li>
 </ul>
 
             
@@ -155,7 +163,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Pre-trained Language Models</li>
+      <li>Language Models</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -174,8 +182,222 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="pre-trained-language-models">
-<h1>Pre-trained Language Models<a class="headerlink" href="#pre-trained-language-models" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="id1">
+<h1>Language Models<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>All of the available DanSpeech language models are shown below. If you need to finetune or train your own model,
+then you can find more information at ???? LINK</p>
+<p>Recommended usage for all language models (except a custom model):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">danspeech.language_models</span> <span class="kn">import</span> <span class="n">DSL3gram</span>
+<span class="n">lm</span> <span class="o">=</span> <span class="n">DSL3gram</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="method">
+<h2>Method<a class="headerlink" href="#method" title="Permalink to this headline">¶</a></h2>
+<p>All language models are n-gram models with modified Kneser-Ney smoothing constructed from large text-corpora.</p>
+<p>They have been generated with the use of <a class="reference external" href="https://kheafield.com/code/kenlm/">kenLM</a>.</p>
+</div>
+<div class="section" id="module-danspeech.language_models">
+<span id="available-models"></span><h2>Available models<a class="headerlink" href="#module-danspeech.language_models" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="danspeech.language_models.DSL3gram">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">DSL3gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.DSL3gram" title="Permalink to this definition">¶</a></dt>
+<dd><p>DSL 3-gram language model. This is the best performing for out test cases along with DSL 5-gram.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.DSL5gram">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">DSL5gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.DSL5gram" title="Permalink to this definition">¶</a></dt>
+<dd><p>DSL 5-gram language model. This is the best performing for out test cases along with DSL 3-gram.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.DSLWiki3gram">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">DSLWiki3gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.DSLWiki3gram" title="Permalink to this definition">¶</a></dt>
+<dd><p>DSL and wikipedia corpus trained 3-gram model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.DSLWiki5gram">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">DSLWiki5gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.DSLWiki5gram" title="Permalink to this definition">¶</a></dt>
+<dd><p>DSL and wikipedia corpus trained 5-gram model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.DSLWikiLeipzig3gram">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">DSLWikiLeipzig3gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.DSLWikiLeipzig3gram" title="Permalink to this definition">¶</a></dt>
+<dd><p>DSL, wikipedia and Leipzig corpus trained 3-gram model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.DSLWikiLeipzig5gram">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">DSLWikiLeipzig5gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.DSLWikiLeipzig5gram" title="Permalink to this definition">¶</a></dt>
+<dd><p>DSL, wikipedia and Leipzig corpus trained 5-gram model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.Wiki3gram">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">Wiki3gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.Wiki3gram" title="Permalink to this definition">¶</a></dt>
+<dd><p>wikipedia corpus trained 3-gram model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.Wiki5gram">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">Wiki5gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.Wiki5gram" title="Permalink to this definition">¶</a></dt>
+<dd><p>wikipedia corpus trained 5-gram model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.Folketinget3gram">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">Folketinget3gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.Folketinget3gram" title="Permalink to this definition">¶</a></dt>
+<dd><p>3-gram language model trained on all meeting summaries from the Danish Parliament (Folketinget)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.DSL3gramWithNames">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">DSL3gramWithNames</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.DSL3gramWithNames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Includes DSL + a bias towards the most common names in Denmark.</p>
+<p>DSL 3-gram language model. This is the best performing for out test cases along with DSL 5-gram.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
+recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="danspeech.language_models.CustomLanguageModel">
+<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">CustomLanguageModel</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.CustomLanguageModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Custom language model. This is actually a dummy wrapper, and you may also pass the path to your custom .klm model
+directly to the recognizer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path to a .klm language model</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to .klm language model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -186,7 +408,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="auto_examples/index.html" class="btn btn-neutral float-right" title="DanSpeech Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="models.html" class="btn btn-neutral float-left" title="Pre-trained DanSpeech Models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

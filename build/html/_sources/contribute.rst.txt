@@ -1,0 +1,6 @@
+=========================
+Contributing to DanSpeech
+=========================
+Please contribute:
+
+fork and make pull request

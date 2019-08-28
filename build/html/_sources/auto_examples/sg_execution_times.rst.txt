@@ -1,0 +1,12 @@
+
+:orphan:
+
+.. _sphx_glr_auto_examples_sg_execution_times:
+
+Computation times
+=================
+**00:17.274** total execution time for **auto_examples** files:
+
+- **00:17.274**: :ref:`sphx_glr_auto_examples_execute_recognize.py` (``execute_recognize.py``)
+- **00:00.000**: :ref:`sphx_glr_auto_examples_real_time_streaming_example.py` (``real_time_streaming_example.py``)
+- **00:00.000**: :ref:`sphx_glr_auto_examples_stream_example.py` (``stream_example.py``)
