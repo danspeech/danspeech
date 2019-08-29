@@ -1,6 +1,6 @@
 from danspeech.utils.data_utils import get_model
 
-LANGUAGE_MODEL_ORIGIN = "https://github.com/Rasmusafj/models_development/raw/master/dsl_names.klm"
+LANGUAGE_MODEL_ORIGIN = "https://github.com/danspeech/danspeech/releases/download/v0.02-alpha/dsl_names.klm"
 
 
 def DSL3gramWithNames(cache_dir=None):
