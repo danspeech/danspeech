@@ -3,7 +3,6 @@ from .dsl_5gram import DSL5gram
 from .dsl_wiki_3gram import DSLWiki3gram
 from .dsl_wiki_5gram import DSLWiki5gram
 from .dsl_wiki_leipzig_3gram import DSLWikiLeipzig3gram
-from .dsl_wiki_leipzig_5gram import DSLWikiLeipzig5gram
 from .wiki_3gram import Wiki3gram
 from .wiki_5gram import Wiki5gram
 from .folketinget_3gram import Folketinget3gram

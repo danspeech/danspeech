@@ -71,12 +71,12 @@ Train or Finetune DanSpeech models
 ----------------------------------
 If you require better performance than what is apparent from the DanSpeech pre-trained models, we've also created
 a github repository, where you can train completely new models from scratch or finetune existing DanSpeech models
-to your specific domain/use-case (preferred method). **LINK MISSING TO TRAINING REPO.**
+to your specific domain/use-case (preferred method).
+
+For more information, see :ref:`training-repo`.
 
 Training new models or finetuning DanSpeech models is useful if you have knowledge about the domain, which you wish
 to apply Danish speech recognition to, **and** you have either text resources or in the best case speech data available.
 
 Finetuning a DanSpeech model can result in much better performance but does require technical expertise and
 an available GPU for training. As an example of performance for such a system, see :ref:`demo`.
-
-For more information, see :ref:`training-repo`.

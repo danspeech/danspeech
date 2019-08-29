@@ -185,7 +185,7 @@
   <div class="section" id="language-models">
 <span id="id1"></span><h1>Language Models<a class="headerlink" href="#language-models" title="Permalink to this headline">¶</a></h1>
 <p>All of the available DanSpeech language models are shown below. If you need to finetune or train your own model,
-then you can find more information at ???? LINK</p>
+then you can find more information at <a class="reference internal" href="train.html#training-repo"><span class="std std-ref">DanSpeech training repository</span></a>.</p>
 <p>Recommended usage for all language models (except a custom model):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">danspeech.language_models</span> <span class="kn">import</span> <span class="n">DSL3gram</span>
 <span class="n">lm</span> <span class="o">=</span> <span class="n">DSL3gram</span><span class="p">()</span>
@@ -274,24 +274,6 @@ recommended, and if left out, the DanSpeech models will be stored in the <code c
 <dt id="danspeech.language_models.DSLWikiLeipzig3gram">
 <code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">DSLWikiLeipzig3gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.DSLWikiLeipzig3gram" title="Permalink to this definition">¶</a></dt>
 <dd><p>DSL, wikipedia and Leipzig corpus trained 3-gram model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not
-recommended, and if left out, the DanSpeech models will be stored in the <code class="docutils literal notranslate"><span class="pre">~/.danspeech/lms/</span></code> folder.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>path to .klm language model</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="danspeech.language_models.DSLWikiLeipzig5gram">
-<code class="sig-prename descclassname">danspeech.language_models.</code><code class="sig-name descname">DSLWikiLeipzig5gram</code><span class="sig-paren">(</span><em class="sig-param">cache_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#danspeech.language_models.DSLWikiLeipzig5gram" title="Permalink to this definition">¶</a></dt>
-<dd><p>DSL, wikipedia and Leipzig corpus trained 5-gram model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>cache_dir</strong> (<em>str</em>) – If you wish to use custom directory to stash/cache your models. This is generally not

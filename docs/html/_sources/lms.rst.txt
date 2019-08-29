@@ -4,7 +4,7 @@
 Language Models
 ===============
 All of the available DanSpeech language models are shown below. If you need to finetune or train your own model,
-then you can find more information at ???? LINK
+then you can find more information at :ref:`training-repo`.
 
 Recommended usage for all language models (except a custom model):
 
@@ -27,4 +27,4 @@ Available models
 
 .. automodule:: danspeech.language_models
     :members: DSL3gram, DSL5gram, DSL3gramWithNames, DSLWiki3gram, DSLWiki5gram, DSLWikiLeipzig3gram,
-        DSLWikiLeipzig5gram, Wiki3gram, Wiki5gram, Folketinget3gram, CustomLanguageModel
+        Wiki3gram, Wiki5gram, Folketinget3gram, CustomLanguageModel

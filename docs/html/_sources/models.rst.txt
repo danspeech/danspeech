@@ -5,7 +5,7 @@ Pre-trained DanSpeech Models
 ============================
 
 All of the available DanSpeech models are shown below. If you need to finetune or train your own model,
-then you can find more information at ???? LINK
+then you can find more information at :ref:`training-repo`.
 
 Recommended usage for all models (except a custom model):
 
