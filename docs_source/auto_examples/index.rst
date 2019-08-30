@@ -70,6 +70,26 @@ Below is a gallery of examples
    :hidden:
 
    /auto_examples/real_time_streaming_example
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This is an example where a full video (converted to .wav) is being transcribed as it would be t...">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_video_transcribe_simulation_thumb.png
+
+        :ref:`sphx_glr_auto_examples_video_transcribe_simulation.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/video_transcribe_simulation
 .. raw:: html
 
     <div style='clear:both'></div>
@@ -84,13 +104,13 @@ Below is a gallery of examples
 
   .. container:: sphx-glr-download
 
-    :download:`Download all examples in Python source code: auto_examples_python.zip <//home/mcn/danspeech/docs_source/auto_examples/auto_examples_python.zip>`
+    :download:`Download all examples in Python source code: auto_examples_python.zip <//Users/arpelarpe/programming_projects/danspeech/docs_source/auto_examples/auto_examples_python.zip>`
 
 
 
   .. container:: sphx-glr-download
 
-    :download:`Download all examples in Jupyter notebooks: auto_examples_jupyter.zip <//home/mcn/danspeech/docs_source/auto_examples/auto_examples_jupyter.zip>`
+    :download:`Download all examples in Jupyter notebooks: auto_examples_jupyter.zip <//Users/arpelarpe/programming_projects/danspeech/docs_source/auto_examples/auto_examples_jupyter.zip>`
 
 
 .. only:: html
