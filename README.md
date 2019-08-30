@@ -9,20 +9,21 @@ You can find all relevant information in the documentation and we provide you wi
 
 [![Examples](https://img.shields.io/badge/Examples-blue.svg?style=for-the-badge)](https://danspeech.github.io/danspeech/html/auto_examples/index.html)
 
-# Demo
-To experience the danspeech package, we've created a simple demo with a nice GUI. 
+## Demo
+To experience the danspeech package, we've created a simple demo with a nice GUI. It depends on danspeech 
+and django.
 
-The demo resides at [https://github.com/rasmusafj/danspeechdemo](https://github.com/rasmusafj/danspeechdemo).
+The demo resides at [https://github.com/danspeech/danspeechdemo](https://github.com/danspeech/danspeechdemo).
 
-# Train models
+## Train models
 If you wish to train your own models, or perhaps finetune a DanSpeech model to your specific use case, we then 
-referr to the DanSpeech training repository. 
+refer to the [DanSpeech training repository](https://github.com/danspeech/danspeech_training). 
 
-# Support
+## Support
 If you require help with the software, then feel free to create issues here on github. We will continually solve issues
 and answer any questions that you might have. 
 
-# Authors and acknowledgment
+## Authors and acknowledgment
 Main authors: 
 * Martin Carsten Nielsen  ([mcnielsen4270@gmail.com](mcnielsen4270@gmail.com))
 * Rasmus Arpe Fogh Jensen ([rasmus.arpe@gmail.com](rasmus.arpe@gmail.com))
@@ -34,6 +35,15 @@ Other acknowledgements:
 * Handling of the pretrained models is based on [keras](https://github.com/keras-team/keras).
 * We've trained all models with the aid of DTU using data from Sprakbanken ([NST](https://www.nb.no/sprakbanken/show?serial=oai%3Anb.no%3Asbr-19&lang=en)).
 
-# Project status
-The project is currently under development. We will soon give first release and we expect a stable release to ocurr
-in late august 2019. If you want to contribute, then you are welcome to fork and create pull requests. 
+
+## Licence
+The software is in general licenced under the Apache-2 licence and may be used commercially. 
+
+[![Licence](https://img.shields.io/badge/license-Apache--2.0-blue)](https://github.com/danspeech/LICENCE.txt)
+
+**NOTE:**
+Some code parts in DanSpeech contain links to other original sources. If this is the case, then the specific code 
+part is licenced differently depending on the source and if you wish to redistribute DanSpeech code, then you must
+make sure you also comply with the original code licences.  
+
+The flac binaries are licenced under GPLv2. See more information at [Flac licence](https://github.com/Uberi/speech_recognition/blob/master/LICENSE-FLAC.txt).
