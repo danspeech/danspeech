@@ -6,10 +6,19 @@ This is an example where a full video (converted to .wav) is being transcribed a
 in a setting where the input was a source with chunk size 1024 (think of a microphone).
 
 This specific example was used to transcribe a
-`Udvalgsmøde" from Folketinget (Danish Parliament) <https://www.ft.dk/aktuelt/webtv/video/20182/beu/td.1583453.aspx?as=1>`_
+`"Udvalgsmøde" from Folketinget (Danish Parliament) <https://www.ft.dk/aktuelt/webtv/video/20182/beu/td.1583453.aspx?as=1>`_
 with offset 18 seconds.
 
-The result can be seen in `DanSpeech udvalgsmøde result <https://gist.github.com/Rasmusafj/fb416032f70331a5641446bb0e61d008>`
+The result can be seen in `Udvalgsmøde result <https://gist.github.com/Rasmusafj/fb416032f70331a5641446bb0e61d008>`_
+
+Note that the video needs to be converted to the correct format. See below:
+
+- First convert your video to .wav in the correct format
+- Example using ffmpeg:
+
+.. code-block:: bash
+
+    ffmpeg -i video.mp4 -vn -acodec pcm_s16le -ar 16000 -ac 1 video_audio.wav
 
 """
 
