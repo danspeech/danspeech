@@ -2,13 +2,20 @@
 Installation
 ============
 
-Currently DanSpeech is installed by
+DanSpeech is installed by
 
 .. code-block:: bash
 
-    $ git clone https://github.com/Rasmusafj/danspeech
+    $ pip install danspeech
+
+
+If you wish to install from source, then do
+
+.. code-block:: bash
+
+    $ git clone https://github.com/danspeech/danspeech
     $ cd danspeech
-    $ pip install . -r requirements.txt
+    $ pip install .
 
 
 DanSpeech requires python 3.5+.
