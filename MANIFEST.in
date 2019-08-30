@@ -1,1 +1,4 @@
+include README.md
+include LICENCE.txt
+include requirements.txt
 include danspeech/deepspeech/labels.json
