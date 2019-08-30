@@ -51,7 +51,7 @@ setuptools.setup(
     license_file="LICENCE.txt",
     classifiers=[
         "Programming Language :: Python :: 3",
-        'Development Status :: 3 - Released',
+        'Development Status :: 5 - Production/Stable',
         "Operating System :: OS Independent",
     ],
 )
