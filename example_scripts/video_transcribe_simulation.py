@@ -13,9 +13,6 @@ The result can be seen in `Udvalgsmøde result <https://gist.github.com/Rasmusaf
 
 Note that the video needs to be converted to the correct format. See below:
 
-awdaw testing wad
-
-
 - First convert your video to .wav in the correct format
 - Example using ffmpeg:
 
