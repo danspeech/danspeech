@@ -37,6 +37,11 @@ class InstallWithExtraSteps(install):
 """
 Below is DanSpeech licence
 """
+
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
+
 setuptools.setup(
     name="danspeech",
     version="1.0.0",
@@ -48,6 +53,7 @@ setuptools.setup(
     url="https://github.com/danspeech/danspeech",
     packages=setuptools.find_packages(),
     include_package_data=True,
+    install_requires=requirements,
     license_file="LICENCE.txt",
     classifiers=[
         "Programming Language :: Python :: 3",
