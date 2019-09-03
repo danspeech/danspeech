@@ -35,6 +35,9 @@ Other acknowledgements:
 * Handling of the pretrained models is based on [keras](https://github.com/keras-team/keras).
 * We've trained all models with the aid of DTU using data from Sprakbanken ([NST](https://www.nb.no/sprakbanken/show?serial=oai%3Anb.no%3Asbr-19&lang=en)).
 
+Funding:
+
+This project is supported by Innovation Foundation Denmark through the projects DABAI and ATEL
 
 ## Licence
 The software is in general licenced under the Apache-2 licence and may be used commercially. 
