@@ -469,7 +469,7 @@ class Recognizer(object):
         # First takes two samples pr 10ms, the rest needs 160 due to overlapping
         general_sample_requirement = samples_pr_10ms * 2 + (samples_pr_10ms * (required_spec_frames - 1))
 
-        offset = 14 * 60 * 16000
+        offset = 6 * 60 * 16000 + 55 * 16000
 
         # First pass, we need more samples due to padding of initial conv layers
         first_samples_requirement = general_sample_requirement + (samples_pr_10ms * 15)
@@ -490,7 +490,7 @@ class Recognizer(object):
         #print('start video')
         #p = subprocess.Popen(['mplayer', 'valg_moede.mp4'])
 
-        audio = load_audio(path="/home/mcn/danspeech-old/valg_moede.wav")[offset:]
+        audio = load_audio(path="/Users/arpelarpe/Downloads/mette_vid.wav")[offset:]
         # seconds of non-speaking audio before a phrase is considered complete
         pause_threshold = 0.6
         pause_buffer_count = math.ceil(pause_threshold / (1024 / 16000))
