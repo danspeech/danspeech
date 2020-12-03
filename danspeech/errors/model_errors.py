@@ -4,3 +4,7 @@ class ConvError(Exception):
 
 class ModelDoesNotExistError(Exception):
     pass
+
+
+class FreezingMoreLayersThanExist(Exception):
+    pass
