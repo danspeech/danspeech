@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from danspeech.errors.model_errors import ConvError
+from danspeech.errors.model_errors import ConvError, FreezingMoreLayersThanExist
 from danspeech.deepspeech.utils import get_default_audio_config
 
 
@@ -549,6 +549,52 @@ class DeepSpeech(nn.Module):
             if type(m) == nn.modules.conv.Conv2d:
                 seq_len = ((seq_len + 2 * m.padding[1] - m.dilation[1] * (m.kernel_size[1] - 1) - 1) / m.stride[1] + 1)
         return seq_len.int()
+
+    def freeze_layers(self, number_to_freeze=0):
+        """
+        Freezes x amounts of layers in the model for training i.e. weights will not be updated.
+        :param number_to_freeze: int
+        """
+        counter = 0
+
+        # If no layers to freeze, return
+        if number_to_freeze == 0:
+            return
+
+        # If trying to freeze more layers than there is, throw error
+        if number_to_freeze > self.conv_layers + self.rnn_layers:
+            raise FreezingMoreLayersThanExist("You are trying to freeze more layers than exists in "
+                                              "model... Choose smaller number")
+
+        for name, child in self.named_children():
+            # Conv layers consist of 3 blocks
+            if name == "conv":
+                if counter < number_to_freeze:
+                    seq_child = child.named_children()
+                    name, seq_module = next(seq_child)
+                    conv_module_childs = list(seq_module.named_children())
+                    # Since conv layer consist of 3 blocks
+                    number_of_conv_layers = int(len(conv_module_childs) / 3)
+                    # Either freeze all conv layers (first min) or specified number if less than actual amount (second min)
+                    number_of_conv_children_to_freeze = min(number_of_conv_layers * 3, number_to_freeze * 3)
+                    # Freeze all 3 blocks.
+                    for i in range(number_of_conv_children_to_freeze):
+                        if i % 3 == 0:
+                            print("Freezing conv layer {}".format(counter))
+                            counter += 1
+
+                        name, conv_child = conv_module_childs[i]
+                        for param in conv_child.parameters():
+                            param.requires_grad = False
+
+            if name == "rnns":
+                rnn_childs = child.named_children()
+                for name, rnn_child in rnn_childs:
+                    if counter < number_to_freeze:
+                        print("Freezing rnn layer {}".format(counter))
+                        for param in rnn_child.parameters():
+                            param.requires_grad = False
+                    counter += 1
 
     @classmethod
     def load_model(cls, path):
