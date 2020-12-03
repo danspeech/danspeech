@@ -9,3 +9,6 @@ __pycache__/
 
 # Ignore compiled python files
 .pyc
+
+# egg info
+danspeech.egg-info
