@@ -222,10 +222,10 @@ class DanSpeechRecognizer(object):
         input_sizes = torch.IntTensor([recording.size(3)]).int()
         out, output_sizes = self.model(recording, input_sizes)
         decoded_output, _ = self.decoder.decode(out, output_sizes)
-
         if show_all:
-            if self.lm is None:
-                warnings.warn("You are trying to get all beams but no LM has been instantiated.", NoLmInstantiatedWarning)
+            if self.lm == 'greedy':
+                warnings.warn("You are trying to get all beams but no LM has been instantiated.",
+                              NoLmInstantiatedWarning)
             return decoded_output[0]
         else:
             return decoded_output[0][0]
