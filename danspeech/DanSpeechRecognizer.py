@@ -1,9 +1,14 @@
+import warnings
+
 import torch
 
 from danspeech.deepspeech.decoder import GreedyDecoder, BeamCTCDecoder
 from danspeech.errors.recognizer_errors import ModelNotInitialized
 from danspeech.audio.parsers import SpectrogramAudioParser, InferenceSpectrogramAudioParser
 
+
+class NoLmInstantiatedWarning(Warning):
+    pass
 
 class DanSpeechRecognizer(object):
 
@@ -219,6 +224,8 @@ class DanSpeechRecognizer(object):
         decoded_output, _ = self.decoder.decode(out, output_sizes)
 
         if show_all:
+            if self.lm is None:
+                warnings.warn("You are trying to get all beams but no LM has been instantiated.", NoLmInstantiatedWarning)
             return decoded_output[0]
         else:
             return decoded_output[0][0]
