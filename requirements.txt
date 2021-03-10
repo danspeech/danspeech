@@ -5,3 +5,4 @@ wget
 torch
 six
 librosa
+transformers

@@ -44,7 +44,8 @@ def get_model(model_name,
               origin,
               file_type="acoustic_model",
               file_hash=None,
-              cache_dir=None):
+              cache_dir=None,
+              ignore_validation_and_download=False):
     """
     Downloads a model file from a URL if it not already in the cache.
 
@@ -63,7 +64,10 @@ def get_model(model_name,
     os.makedirs(cache_dir, exist_ok=True)
 
     download = False
+
     fpath = os.path.join(cache_dir, model_name)
+    if ignore_validation_and_download:
+        return fpath
 
     if os.path.exists(fpath) and file_hash:
         if not validate_file(fpath, file_hash):

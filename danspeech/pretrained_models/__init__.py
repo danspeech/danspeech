@@ -7,6 +7,8 @@ from .folketinget_model import Folketinget
 from .transfer_learned_model import TransferLearned
 from .librispeech import EnglishLibrispeech
 from .custom_model import CustomModel
+from .wav2vec2_model import getWav2Vec2CTCModel, getWav2Vec2CTCTokenizer
+
 
 
 def get_model_from_string(model_name):
