@@ -44,7 +44,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name="danspeech",
-    version="1.0.3",
+    version="1.0.4",
     author="Rasmus Arpe Fogh Jensen, Martin Carsten Nielsen",
     author_email="rasmus.arpe@gmail.com, mcnielsen4270@gmail.com,",
     description="Speech recognition for Danish",
